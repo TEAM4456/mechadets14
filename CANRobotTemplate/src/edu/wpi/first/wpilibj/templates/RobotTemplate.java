@@ -5,6 +5,8 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
+// GIT REPOSITORY SUCCESSFULLY MADE!
+
 //CANRobotTemplate 2014
 
 package edu.wpi.first.wpilibj.templates;
