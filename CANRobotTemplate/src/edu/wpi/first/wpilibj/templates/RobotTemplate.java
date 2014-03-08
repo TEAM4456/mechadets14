@@ -65,6 +65,13 @@ public class RobotTemplate extends SimpleRobot {
     Encoder winchEncoder;
     Relay ledLight;
     
+    private final int HOOK_READY = 0;
+    private final int HOOK_WAIT_1 = 1;
+    private final int HOOK_WAIT_2 = 2;
+    
+    private int hookUpdateState = HOOK_READY;
+    private double hookUpdateStartTime = 0.0;
+    
     private int printCounter = 0;
     private int encoderCounter;
     private Value pistonPrevState;
@@ -324,15 +331,11 @@ public class RobotTemplate extends SimpleRobot {
             }
           
             if (controller.getRawButton(button_A)){//this means that you press the A  button to disengage the hook. (allow the ladder to move forward) Devin
-                    loaderPiston.set(DoubleSolenoid.Value.kForward);
-                    Timer.delay(0.2);
-                    hook.set(unlatched);
-                    Timer.delay(1.0);
-                    reload();
-
+                    startHookRelease();
                 } else if (controller.getRawButton(button_B)){//this means that you press the B button to engage the hook. (stop the ladder from moving forward) Devin
-                    hook.set(latched);
+                    startHookLatch();
                 }
+            hookUpdate();
            
         if (controller.getRawButton(button_rightBumper)) {
             //releaseWinch(prefs.getDouble("belt", -10.0));
@@ -381,6 +384,45 @@ public class RobotTemplate extends SimpleRobot {
             Arms_Of_Glory(); // can someone please tell me what this method does and why it's here? _____________________
             Timer.delay(0.01);
          }
+    }
+
+    // function to start hooking the latch
+    private void startHookLatch()
+    {
+        if (hookUpdateState == HOOK_READY)
+        {
+            hook.set(latched);
+        }
+    }
+    
+    // function to call to start the hook release process.
+    private void startHookRelease()
+    {
+        if (hookUpdateState != HOOK_READY)
+            return;
+        
+        hookUpdateStartTime = timer.get();
+        loaderPiston.set(DoubleSolenoid.Value.kForward);
+        hookUpdateState = HOOK_WAIT_1;
+    }
+    
+    // update the hook status
+    private void hookUpdate()
+    {
+        if (hookUpdateState == HOOK_READY)
+        {
+            // Do Nothing...
+        }
+        else if ((hookUpdateState == HOOK_WAIT_1) && ((timer.get() - hookUpdateStartTime) > 0.2))
+        {
+            hook.set(unlatched);
+            hookUpdateState = HOOK_WAIT_2;
+        }
+        else if ((hookUpdateState == HOOK_WAIT_2) && ((timer.get() - hookUpdateStartTime) > 1.2))
+        {
+            reload();
+            hookUpdateState = HOOK_READY;
+        }
     }
     
     /**
