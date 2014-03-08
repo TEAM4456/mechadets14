@@ -130,7 +130,7 @@ public class RobotTemplate extends SimpleRobot {
         
         controller = new Joystick(1);
         gyro = new Gyro(1);
-        accel = new ADXL345_I2C(1, ADXL345_I2C.DataFormat_Range.k4G);
+        //accel = new ADXL345_I2C(1, ADXL345_I2C.DataFormat_Range.k4G);
         winchEncoder = new Encoder(1, 2, false, CounterBase.EncodingType.k1X);
         //winchEncoder = new Encoder(1, 2);
         winchEncoder.setDistancePerPulse(1.0/750.0);
@@ -222,20 +222,20 @@ public class RobotTemplate extends SimpleRobot {
                     hook.set(unlatched);
 
                     // *while the limit switch is pressed, push the winch negative
-                    if(limitSwitch.get()){
+                    while(limitSwitch.get()){
                         winch1.setX(-.5);
                         winch2.setX(-.5);
-                    }else{//*set winch to 0
-                        winch1.setX(0);
-                        winch2.setX(0);
-                        hook.set(latched);
-                        Timer.delay(0.5);
-                        winchEncoder.reset();
-                        if(winchEncoder.getDistance() > -4.8){
-                            winch1.setX(.5);
-                            winch2.setX(.5);
-                        }
+                    }//*set winch to 0
+                    winch1.setX(0);
+                    winch2.setX(0);
+                    hook.set(latched);
+                    Timer.delay(0.5);
+                    winchEncoder.reset();
+                    if(winchEncoder.getDistance() > -4.8){
+                        winch1.setX(.5);
+                        winch2.setX(.5);
                     }
+                    
                     
                 }
             }
@@ -406,9 +406,9 @@ public class RobotTemplate extends SimpleRobot {
         robot.println(DriverStationLCD.Line.kUser6, 1, "VP Distance: " + visionDistance);
         robot.println(DriverStationLCD.Line.kUser1, 1, "GyroAngle " + gyro.getAngle());
         robot.println(DriverStationLCD.Line.kUser2, 1, "Encoder Winch " + winchEncoder.getDistance());
-        robot.println(DriverStationLCD.Line.kUser3, 1, "AccelX: " + accel.getAcceleration(ADXL345_I2C.Axes.kX));
-        robot.println(DriverStationLCD.Line.kUser4, 1, "AccelY: " + accel.getAcceleration(ADXL345_I2C.Axes.kY));
-        robot.println(DriverStationLCD.Line.kUser5, 1, "AccelZ: " + accel.getAcceleration(ADXL345_I2C.Axes.kZ));
+        //robot.println(DriverStationLCD.Line.kUser3, 1, "AccelX: " + accel.getAcceleration(ADXL345_I2C.Axes.kX));
+        //robot.println(DriverStationLCD.Line.kUser4, 1, "AccelY: " + accel.getAcceleration(ADXL345_I2C.Axes.kY));
+        //robot.println(DriverStationLCD.Line.kUser5, 1, "AccelZ: " + accel.getAcceleration(ADXL345_I2C.Axes.kZ));
         if(CANJaguarConnectionFailure.length()>25){
             robot.println(DriverStationLCD.Line.kUser5, 1, CANJaguarConnectionFailure);
         }
@@ -465,10 +465,10 @@ public class RobotTemplate extends SimpleRobot {
         public void dash(){ //displays dashboard values
         
             SmartDashboard.putNumber("controllerA1", controller.getRawAxis(axis_leftStick_X));
-            SmartDashboard.putNumber("AccelX", accel.getAcceleration(ADXL345_I2C.Axes.kX));
-            SmartDashboard.putNumber("AccelY", accel.getAcceleration(ADXL345_I2C.Axes.kY));
-            SmartDashboard.putNumber("AccelZ", accel.getAcceleration(ADXL345_I2C.Axes.kZ));
-            SmartDashboard.putNumber("Angle of Ladder", com.sun.squawk.util.MathUtils.atan2((double)accel.getAcceleration(ADXL345_I2C.Axes.kX), (double)accel.getAcceleration(ADXL345_I2C.Axes.kY)));
+            //SmartDashboard.putNumber("AccelX", accel.getAcceleration(ADXL345_I2C.Axes.kX));
+            //SmartDashboard.putNumber("AccelY", accel.getAcceleration(ADXL345_I2C.Axes.kY));
+            //SmartDashboard.putNumber("AccelZ", accel.getAcceleration(ADXL345_I2C.Axes.kZ));
+            //SmartDashboard.putNumber("Angle of Ladder", com.sun.squawk.util.MathUtils.atan2((double)accel.getAcceleration(ADXL345_I2C.Axes.kX), (double)accel.getAcceleration(ADXL345_I2C.Axes.kY)));
             SmartDashboard.putNumber("winchEncoder", winchEncoder.getDistance());
             SmartDashboard.putNumber("Gyro", gyro.getAngle());
             //SmartDashboard.putNumber("Distance", distance);
