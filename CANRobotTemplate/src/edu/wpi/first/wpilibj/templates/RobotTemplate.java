@@ -5,7 +5,9 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
-//CANRobotTemplate
+// GIT REPOSITORY SUCCESSFULLY MADE!
+
+//CANRobotTemplate 2014
 
 package edu.wpi.first.wpilibj.templates;
 
@@ -563,4 +565,4 @@ public class RobotTemplate extends SimpleRobot {
     }
 }
 
-//4456
+//44564456
