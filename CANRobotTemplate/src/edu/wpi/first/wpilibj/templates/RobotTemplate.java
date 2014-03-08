@@ -89,7 +89,10 @@ public class RobotTemplate extends SimpleRobot {
     //Preferences prefs;
     double distance;
     double beltLength;
-    Timer timer = new Timer(); 
+    Timer timer = new Timer();
+
+    
+    
     
     final int button_A = 1;
     final int button_B = 2;
@@ -343,32 +346,53 @@ public class RobotTemplate extends SimpleRobot {
         }
         
         // if button 8 is pressed, 
+//        if (controller.getRawButton(button_Start)){
+//            if(loaderPiston.get()==DoubleSolenoid.Value.kReverse){
+//                try{
+//                    if (this.armsInitialized) {
+//                        loaderPiston.set(DoubleSolenoid.Value.kForward);
+//                        loaderArm1.setX(-1*controller.getRawAxis(axis_dPad_X));
+//                        loaderArm2.setX(controller.getRawAxis(axis_dPad_X));
+//                    }
+//                }
+//                catch(CANTimeoutException ex){
+//                    ex.printStackTrace();
+//                }
+//            }
+//            else if(loaderPiston.get()==DoubleSolenoid.Value.kForward){
+//                try{
+//                    if (this.armsInitialized) {
+//                        loaderPiston.set(DoubleSolenoid.Value.kReverse);
+//                        loaderArm1.setX(0);
+//                        loaderArm2.setX(0);
+//                    }
+//                }
+//                catch(CANTimeoutException ex){
+//                    ex.printStackTrace();
+//                }
+//            }
+//        }
+        
+        
         if (controller.getRawButton(button_Start)){
-            if(loaderPiston.get()==DoubleSolenoid.Value.kReverse){
-                try{
-                    if (this.armsInitialized) {
-                        loaderPiston.set(DoubleSolenoid.Value.kForward);
-                        loaderArm1.setX(-1*controller.getRawAxis(axis_dPad_X));
-                        loaderArm2.setX(controller.getRawAxis(axis_dPad_X));
-                    }
-                }
-                catch(CANTimeoutException ex){
+                try {
+                    loaderPiston.set(DoubleSolenoid.Value.kForward);
+                    loaderArm1.setX(-.75);
+                    loaderArm2.setX(.75);
+                } catch (CANTimeoutException ex) {
                     ex.printStackTrace();
                 }
-            }
-            else if(loaderPiston.get()==DoubleSolenoid.Value.kForward){
-                try{
-                    if (this.armsInitialized) {
-                        loaderPiston.set(DoubleSolenoid.Value.kReverse);
-                        loaderArm1.setX(0);
-                        loaderArm2.setX(0);
-                    }
-                }
-                catch(CANTimeoutException ex){
-                    ex.printStackTrace();
-                }
-            }
         }
+        else{
+            try {
+                    loaderPiston.set(DoubleSolenoid.Value.kReverse);
+                    loaderArm1.setX(0);
+                    loaderArm2.setX(0);
+                } catch (CANTimeoutException ex) {
+                    ex.printStackTrace();
+                }
+        }
+                
         
 //            try {
 //                Shooting();
