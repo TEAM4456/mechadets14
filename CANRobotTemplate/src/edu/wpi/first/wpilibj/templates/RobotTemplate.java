@@ -194,9 +194,37 @@ public class RobotTemplate extends SimpleRobot {
     public void autonomous() {   //need to work on this.
 //        gyro.reset();
 //        distanceCalculate();
+        compressor.start();
         chassis.setSafetyEnabled(false);  //Turns off safety mechanism to allow drive train motors to say on more than 0.1s
         ledLight.set(Relay.Value.kOn);
         winchEncoder.reset();  //Used to make sure encoder is set to 0 at the start
+        try {
+                while(winchEncoder.getDistance() > -2.5){ //Unwind winch to belt length necessary to shot from starting position
+                    winch1.setX(.75);
+                    winch2.setX(.75);
+                }
+                winch1.setX(0.0);
+                winch2.setX(0.0);
+            } 
+        catch (CANTimeoutException ex) {
+                ex.printStackTrace();
+            }
+        //Need vision processing to determine if goal is hot or not placed here
+        loaderPiston.set(DoubleSolenoid.Value.kForward);  
+        hook.set(unlatched); //The mechanism will launch ball after getting to desired encoder value
+        reload();
+        try {
+            loaderPiston.set(DoubleSolenoid.Value.kForward);
+            loaderArm1.setX(-.50);
+            loaderArm2.setX(.50);
+            timer.delay(1.0);
+            loaderArm1.setX(0.0);
+            loaderArm2.setX(0.0);
+            loaderPiston.set(DoubleSolenoid.Value.kReverse);
+            timer.delay(1.0);
+            } catch (CANTimeoutException ex) {
+                    ex.printStackTrace();
+                }
         
         try {
                 while(winchEncoder.getDistance() > -2.5){ //Unwind winch to belt length necessary to shot from starting position
@@ -210,11 +238,12 @@ public class RobotTemplate extends SimpleRobot {
                 ex.printStackTrace();
             }
         //Need vision processing to determine if goal is hot or not placed here
+        loaderPiston.set(DoubleSolenoid.Value.kForward);  
         hook.set(unlatched); //The mechanism will launch ball after getting to desired encoder value
         chassis.mecanumDrive_Polar(1.0, 0.0, 0.0); //Mecanum Drive forward full speed
         timer.delay(1.0);
-        chassis.mecanumDrive_Polar(0.0,0.0,0.0); //Turn off Mecanum Drive
-        reload (); //Reload arms after driving forward
+        chassis.mecanumDrive_Polar(0.0,0.0,0.0); //Turn off Mecanum Driv
+        reload();
     }
 
     public void reload() {
@@ -286,13 +315,17 @@ public class RobotTemplate extends SimpleRobot {
                 ex.printStackTrace();
             }
           
-            if (controller.getRawButton(button_A)){//this means that you press the A  button to disengage the hook. (allow the ladder to move forward) Devin
-                    startHookRelease();
-               }else if (controller.getRawButton(button_B)){ //this means that you press the A  button to engage the hook. (allow the ladder to back) Devin
-                   startHookLatch();
+            if (controller.getRawButton(button_A)){//this means that you press the A  button to disengage the hook. (allow the ladder to move forward) Devin 
+              loaderPiston.set(DoubleSolenoid.Value.kForward);  
+              Timer.delay(0.2);
+              hook.set(unlatched);
+              Timer.delay(0.5);
+              reload();
+              // startHookRelease();
+               //}else if (controller.getRawButton(button_B)){ //this means that you press the A  button to engage the hook. (allow the ladder to back) Devin
+               //    startHookLatch();
                }
-            hookUpdate();       
-            
+            //hookUpdate();       
             
             if (controller.getRawButton(button_leftBumper)) {
                 //releaseWinch(prefs.getDouble("belt", -10.0));
@@ -399,10 +432,10 @@ public class RobotTemplate extends SimpleRobot {
     private void startHookRelease(){
         if (hookUpdateState !=HOOK_READY)
             return;
+        loaderPiston.set(DoubleSolenoid.Value.kForward);  
         hookUpdateStartTime = timer.get();
         hookUpdateState = HOOK_WAIT_1;
         }
-
     
     //update the hook status
     private void hookUpdate(){
@@ -410,7 +443,6 @@ public class RobotTemplate extends SimpleRobot {
             //Do Nothing...
         }
             else if ((hookUpdateState == HOOK_WAIT_1) && ((timer.get() - hookUpdateStartTime) > 0.2)){
-                        loaderPiston.set(DoubleSolenoid.Value.kForward);  
                 hook.set(unlatched);
                 hookUpdateState = HOOK_WAIT_2;
             }
@@ -420,9 +452,7 @@ public class RobotTemplate extends SimpleRobot {
             }
     }
             
-        
     
-            
     public void Shooting() throws CANTimeoutException{
 //Encoder number
         int EncoderShootingValue = 0;
