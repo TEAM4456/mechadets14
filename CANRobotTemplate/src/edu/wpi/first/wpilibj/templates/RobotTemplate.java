@@ -122,8 +122,11 @@ public class RobotTemplate extends SimpleRobot {
     public void robotInit(){
         //prefs = Preferences.getInstance();
         
-        SmartDashboard.putNumber("beltLength", -10.5); //the two doubles that are written in the following line are default values and can be changed. Change the default values to the starting values of the robot in autonamous. Devin
-                
+        SmartDashboard.putNumber("long_BeltLength", -10.0); //the two doubles that are written in the following line are default values and can be changed. Change the default values to the starting values of the robot in autonamous. Devin
+        SmartDashboard.putNumber("mediumLong_BeltLength", -6.0);//the two doubles that are written in the following line are default values and can be changed. Change the default values to the starting values of the robot in autonamous. Devin
+        SmartDashboard.putNumber("mediumShort_BeltLength", -4.0);//the two doubles that are written in the following line are default values and can be changed. Change the default values to the starting values of the robot in autonamous. Devin
+        SmartDashboard.putNumber("short_BeltLength", -2.0);//the two doubles that are written in the following line are default values and can be changed. Change the default values to the starting values of the robot in autonamous. Devin
+
         try { //Assign Drive Train Motors
             MotorLF = new CANJaguar(13);
             MotorLB = new CANJaguar(6);
@@ -291,10 +294,19 @@ public class RobotTemplate extends SimpleRobot {
             hookUpdate();       
             
             
-            if (controller.getRawButton(button_rightBumper)) {
+            if (controller.getRawButton(button_leftBumper)) {
                 //releaseWinch(prefs.getDouble("belt", -10.0));
-                releaseWinch(SmartDashboard.getNumber("beltLength", -10.0));
+                releaseWinch(SmartDashboard.getNumber("long_BeltLength", -10.0));
             }      
+            if(controller.getRawButton(button_Y)){
+                releaseWinch(SmartDashboard.getNumber("mediumShort_BeltLength", -6.0));
+            }
+            if(controller.getRawButton(button_X)){
+                releaseWinch(SmartDashboard.getNumber("short_BeltLength", -2.0));
+            }
+            if(controller.getRawButton(button_rightBumper)){
+                releaseWinch(SmartDashboard.getNumber("mediumLong_BeltLength", -4.0));
+            }
               //*if button 7 (Back button) is pressed, 
             if (controller.getRawButton(button_Back)){
                 reload();   
@@ -459,7 +471,13 @@ public class RobotTemplate extends SimpleRobot {
             SmartDashboard.putNumber("winchEncoder", winchEncoder.getDistance());
             SmartDashboard.putNumber("Gyro", gyro.getAngle());
             SmartDashboard.putNumber("Distance", distance);
-            SmartDashboard.putNumber("Belt Length", beltLength);
+            
+            SmartDashboard.putNumber("Long Belt Length", long_BeltLength);
+            SmartDashboard.putNumber("Medium Short Belt Length", mediumShort_BeltLength);
+            SmartDashboard.putNumber("Medium Long Belt Length", mediumLong_BeltLength);
+            SmartDashboard.putNumber("Short Belt Length", short_BeltLength);
+
+
             SmartDashboard.putNumber("winchEncoderDisPerPulse", winchEncoder.getRaw());
             SmartDashboard.putBoolean("Limit Switch",limitSwitch.get() );
             SmartDashboard.putNumber("Distance from Target", distance);
