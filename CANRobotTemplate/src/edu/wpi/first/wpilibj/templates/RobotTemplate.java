@@ -90,11 +90,18 @@ public class RobotTemplate extends SimpleRobot {
     
     private double visionDistance;
     private double VisionCounter;
+    public distanceCalculator dCalc;
     
     //This allows the user of the driver netbook to manually adjust the distance he or she thinks they are from the target. Devin 
     //Preferences prefs;
     double distance;
     double beltLength;
+    final double long_BeltLength = 10.0;
+    final double medium_BeltLength = 8.0;
+    final double mediumShort_BeltLength = 8.0;
+    final double short_BeltLength = 8.0;
+    final double mediumLong_BeltLength = 8.0;
+    
     Timer timer = new Timer();
 
     //Defines Xbox Buttons
@@ -183,6 +190,8 @@ public class RobotTemplate extends SimpleRobot {
         cc.addCriteria(NIVision.MeasurementType.IMAQ_MT_BOUNDING_RECT_HEIGHT, 40, 400, false);
         visionDistance = 0;
         VisionCounter = 0;
+        
+        dCalc = new distanceCalculator(camera, cc, pixelsV, vertAngle, targetHeight);
         //cc.addCriteria(NIVision.MeasurementType.IMAQ_MT_ORIENTATION, -0.2, 0.2, false);
 
     }
@@ -514,64 +523,7 @@ public class RobotTemplate extends SimpleRobot {
 
         }
 
-    private void distanceCalculate() {
-        ColorImage image = null;
-        BinaryImage thresholdRGBImage = null;
-        BinaryImage thresholdHSIImage = null;
-        BinaryImage bigObjectsImage= null;
-        BinaryImage convexHullImage=null;
-        BinaryImage filteredImage = null;
-        
-        try {
-            image = camera.getImage();
-            camera.writeBrightness(50);
-            image.write("originalImage.jpg");
-            thresholdRGBImage = image.thresholdRGB(0, 45, 175, 255, 0, 47);
-            
-            thresholdRGBImage.write("thresholdRGBImage.bmp");
-            thresholdHSIImage = image.thresholdHSI(0, 255, 0, 255, 200, 255);
-            thresholdHSIImage.write("thresholdHSIImage.bmp");
-            bigObjectsImage = thresholdHSIImage.removeSmallObjects(false, 2);
-            bigObjectsImage.write("bigObjectsImage.bmp");
-            convexHullImage = bigObjectsImage.convexHull(false);
-            convexHullImage.write("convexHullImage.bmp");
-            filteredImage = convexHullImage.particleFilter(cc);
-            filteredImage.write("filteredImage.bmp");
-            ParticleAnalysisReport[] reports = filteredImage.getOrderedParticleAnalysisReports();
-            
-            String output;
-//            for(int i = 0; i<reports.length+1; i++) {
-//                robot.println(DriverStationLCD.Line.kUser6, 1, ""+reports[i].center_mass_x);
-//                System.out.println(reports[i].center_mass_x);
-//            }
-            if (reports.length > 0) {
-                double pixelsHeight = reports[0].boundingRectHeight;
-//                double centerX = reports[0].center_mass_x_normalized;
-//                double centerY = reports[0].center_mass_y_normalized;
-//                double targetAngle = 47*(centerX);
-                double angle = pixelsHeight/pixelsV*(vertAngle*Math.PI/180);
-                double Vdistance = targetHeight/angle;
-                visionDistance = Vdistance;
-
-                SmartDashboard.putNumber("Distance: ", Vdistance);
-            } else {
-//                robot.println(DriverStationLCD.Line.kUser6, 1, "no targets. :(");
-            }
-        }catch (Exception ex) {
-            ex.printStackTrace();
-        }finally{
-        }
-        try {
-            filteredImage.free();
-            convexHullImage.free();
-            bigObjectsImage.free();
-            //thresholdRGBImage.free();
-            thresholdHSIImage.free();
-            image.free();
-        } catch (NIVisionException ex) {
-            ex.printStackTrace();
-        }
-    }
+    
     
     /*
      * Misc utility methods that might be called by various tasks
