@@ -60,12 +60,11 @@ public class RobotTemplate extends SimpleRobot {
     SendableChooser autoChooser;
     //public static SendableChooser autoChooser;
     
-    RobotDrive chassis;
     Joystick controller;
     Gyro gyro;
     ADXL345_I2C accel;
     DriverStationLCD robot = DriverStationLCD.getInstance();     //Drivers Station output box declaration
-    Jaguar winch1, winch2, loaderArm1, loaderArm2, MotorLF, MotorLB, MotorRF, MotorRB; //MotorRF(R)ight(F)ront, MotorLB(L)eft(B)ack
+    Jaguar winch1, winch2, loaderArm1, loaderArm2; //MotorRF(R)ight(F)ront, MotorLB(L)eft(B)ack
     Compressor compressor;
     DoubleSolenoid hook, loaderPiston;
     Servo servoVertical, servoHorizontal;
@@ -78,25 +77,14 @@ public class RobotTemplate extends SimpleRobot {
     //right front 3
     //right back 4
     
-    private final int HOOK_READY = 0;
-    private final int HOOK_WAIT_1 = 1;
-    private final int HOOK_WAIT_2 = 2;
     
-    private int hookUpdateState = HOOK_READY;
+    private int hookUpdateState = Constants.HOOK_READY;
     private double hookUpdateStartTime = 0.0;
     
     private int printCounter = 0;
     private int encoderCounter;
     private Value pistonPrevState;
     
-    //Vision Processing
-    final double pixelsT = 640;
-    final double pixelsV = 480;
-    final double visionR = 47*Math.PI/180;
-    final double lengthG = 36/2;
-    final double vertAngle = 32.5;
-    final double targetHeight = 32.0;//this height is from last year's reflective board. Must measure this year's goals!! Devin
-    final double desiredDistance = 60;
     CriteriaCollection cc;
     
     private double visionDistance;
@@ -111,26 +99,8 @@ public class RobotTemplate extends SimpleRobot {
     double mediumLong_BeltLength;
     double mediumShort_BeltLength;
     double short_BeltLength;
-    final double WINCH_OVERSHOOT = 0.4;
     Timer timer = new Timer();
 
-    //Defines Xbox Buttons
-    final int button_A = 1;
-    final int button_B = 2;
-    final int button_X = 3;
-    final int button_Y = 4;
-    final int button_leftBumper = 5;
-    final int button_rightBumper = 6;
-    final int button_Back = 7;
-    final int button_Start = 8;
-    final int button_leftStick = 9;
-    final int button_rightStick = 10;
-    final int axis_leftStick_X = 1;
-    final int axis_leftStick_Y = 2;
-    final int axis_triggers = 3;
-    final int axis_rightStick_X = 4;
-    final int axis_rightStick_Y = 5;
-    final int axis_dPad_X = 6;
     private Value latched;
     private Value unlatched;
     
@@ -146,18 +116,13 @@ public class RobotTemplate extends SimpleRobot {
         SmartDashboard.putNumber("mediumShort_BeltLength", -4.5);//the two doubles that are written in the following line are default values and can be changed. Change the default values to the starting values of the robot in autonamous. Devin
         SmartDashboard.putNumber("short_BeltLength", -2.0);//the two doubles that are written in the following line are default values and can be changed. Change the default values to the starting values of the robot in autonamous. Devin
         //Assign Drive Train Motors
-            MotorLF = new Jaguar(1);
-            MotorLB = new Jaguar(2);
-            MotorRF = new Jaguar(3);
-            MotorRB = new Jaguar(4);
-            chassis = new RobotDrive(MotorLF, MotorLB, MotorRF, MotorRB);
             
-            winch1 = new Jaguar(5);
-            winch2= new Jaguar(6);
+        winch1 = new Jaguar(5);
+        winch2= new Jaguar(6);
         
          // Assign Pick Up Arm Motors
-            loaderArm1 = new Jaguar(7);
-            loaderArm2 = new Jaguar(8);
+        loaderArm1 = new Jaguar(7);
+        loaderArm2 = new Jaguar(8);
         
         controller = new Joystick(1);
         limitSwitch = new DigitalInput(3);//true = open; false = close
@@ -168,11 +133,13 @@ public class RobotTemplate extends SimpleRobot {
         //winchEncoder.setDistancePerPulse(1.0/100);//this pulse rate is for the practice robot. devin
         //ledLight = new Relay(2);
         compressor = new Compressor(4,1); //Assigns Compressor
+        
         hook = new DoubleSolenoid(1,2);  //Assigns Solenoid to Control Shooter Hook
-            latched = DoubleSolenoid.Value.kReverse; //Assigns variable to Shooter Hook Solenoid to unhook
-            unlatched = DoubleSolenoid.Value.kForward; //Assigns variable to Shooter Hook Solenoid to hook
+        latched = DoubleSolenoid.Value.kReverse; //Assigns variable to Shooter Hook Solenoid to unhook
+        unlatched = DoubleSolenoid.Value.kForward; //Assigns variable to Shooter Hook Solenoid to hook
+        
         loaderPiston = new DoubleSolenoid(3,4); //Assigns Solenoid to Control Pick Up Arm
-            pistonPrevState = DoubleSolenoid.Value.kOff; //Assigns Variable to Piston to Default state
+        pistonPrevState = DoubleSolenoid.Value.kOff; //Assigns Variable to Piston to Default state
         timer.start(); //Initialize timer
         winchEncoder.start();
         
@@ -204,17 +171,17 @@ public class RobotTemplate extends SimpleRobot {
          // gyro.reset();
 //        distanceCalculate();
 //        compressor.start();
-          chassis.setSafetyEnabled(false);  //Turns off safety mechanism to allow drive train motors to say on more than 0.1s
-          winchEncoder.reset();  //Used to make sure encoder is set to 0 at the start
+        DriveTrain.setChassisSafteyEnabled(false);
+        winchEncoder.reset();  //Used to make sure encoder is set to 0 at the start
 //        
-           chassis.mecanumDrive_Polar(1.0, 0.0, 0.0); //Mecanum Drive forward full speed
-           timer.delay(1.2);
-           chassis.mecanumDrive_Polar(0.0,0.0,0.0); //Turn off Mecanum Drive
+        chassis.mecanumDrive_Polar(1.0, 0.0, 0.0); //Mecanum Drive forward full speed
+        timer.delay(1.2);
+        chassis.mecanumDrive_Polar(0.0,0.0,0.0); //Turn off Mecanum Drive
                           
-          while(winchEncoder.getDistance() > -7.0 && isAutonomous()){ //Unwind winch to belt length necessary to shot from starting position
-               winch1.set(1.0);
-               winch2.set(1.0);     
-                }
+        while(winchEncoder.getDistance() > -7.0 && isAutonomous()){ //Unwind winch to belt length necessary to shot from starting position
+            winch1.set(1.0);
+            winch2.set(1.0);     
+        }
                 if (!isAutonomous())
                     return; 
                 winch1.set(0.0);
@@ -308,7 +275,7 @@ public class RobotTemplate extends SimpleRobot {
         
         
             if(winchEncoder.getDistance() < distanceOfWinch){
-                distanceOfWinch-= WINCH_OVERSHOOT;
+                distanceOfWinch-= Constants.WINCH_OVERSHOOT;
 
                 while(winchEncoder.getDistance() < distanceOfWinch){
                     winch1.set(-1.0);
@@ -316,7 +283,7 @@ public class RobotTemplate extends SimpleRobot {
                 }
             }
             else{
-                distanceOfWinch+= WINCH_OVERSHOOT;
+                distanceOfWinch+= Constants.WINCH_OVERSHOOT;
 
                 while(winchEncoder.getDistance() > distanceOfWinch){
                 winch1.set(1.0);
@@ -337,50 +304,53 @@ public class RobotTemplate extends SimpleRobot {
             //double angle = gyro.getAngle();
                      
             //ledLight.set(Relay.Value.kReverse);
-            Output();
-            dash();
+        Output();
+        dash();
 //            if(VisionCounter >=100){
 //                distanceCalculate();
 //                VisionCounter = 0;
 //            }
 //            VisionCounter++;
-                winch1.set(controller.getRawAxis(axis_triggers));
-                winch2.set(controller.getRawAxis(axis_triggers));
-          
-            if (controller.getRawButton(button_A)){//this means that you press the A  button to disengage the hook. (allow the ladder to move forward) Devin 
-              loaderPiston.set(DoubleSolenoid.Value.kForward);  
-              chassis.mecanumDrive_Polar(0.0,0.0,0.0); //Turn off Mecanum Driv
-              Timer.delay(0.70);
-              hook.set(unlatched);
-              Timer.delay(0.5);
-              reload();
-              // startHookRelease();
-               //}else if (controller.getRawButton(button_B)){ //this means that you press the A  button to engage the hook. (allow the ladder to back) Devin
-               //    startHookLatch();
-               }
+        winch1.set(controller.getRawAxis(Constants.axis_triggers));
+        winch2.set(controller.getRawAxis(Constants.axis_triggers));
+        
+        
+        //A will disengage the hook
+        if (controller.getRawButton(Constants.button_A)) 
+        {
+            loaderPiston.set(DoubleSolenoid.Value.kForward);  
+            chassis.mecanumDrive_Polar(0.0,0.0,0.0); //Turn off Mecanum Driv
+            Timer.delay(0.70);
+            hook.set(unlatched);
+            Timer.delay(0.5);
+            reload();
+          // startHookRelease();
+           //}else if (controller.getRawButton(Constants.button_B)){ //this means that you press the A  button to engage the hook. (allow the ladder to back) Devin
+           //    startHookLatch();
+         }
             //hookUpdate();       
-            if(controller.getRawButton(button_leftBumper)){
+            if(controller.getRawButton(Constants.button_leftBumper)){
                 releaseWinch(SmartDashboard.getNumber("superLong_BeltLength", -18.0));
             }
-            if (controller.getRawButton(button_Start)) {
+            if (controller.getRawButton(Constants.button_Start)) {
                 //releaseWinch(prefs.getDouble("belt", -10.0));
                 releaseWinch(SmartDashboard.getNumber("long_BeltLength", -10.0));
             }      
-            if(controller.getRawButton(button_X)){
+            if(controller.getRawButton(Constants.button_X)){
                 releaseWinch(SmartDashboard.getNumber("mediumShort_BeltLength", -4.5));
             }
-            if(controller.getRawButton(button_B)){
+            if(controller.getRawButton(Constants.button_B)){
                 releaseWinch(SmartDashboard.getNumber("short_BeltLength", -2.0));
             }
-            if(controller.getRawButton(button_Y)){
+            if(controller.getRawButton(Constants.button_Y)){
                 releaseWinch(SmartDashboard.getNumber("mediumLong_BeltLength", -7.0));
             }
               //*if button 7 (Back button) is pressed, 
-            if (controller.getRawButton(button_Back)){
+            if (controller.getRawButton(Constants.button_Back)){
                 reload();   
             }
         
-        if (controller.getRawButton(button_rightBumper)){
+        if (controller.getRawButton(Constants.button_rightBumper)){
                     loaderPiston.set(DoubleSolenoid.Value.kForward);
                     loaderArm1.set(-.75);
                     loaderArm2.set(.75);
@@ -397,7 +367,11 @@ public class RobotTemplate extends SimpleRobot {
 //            } catch (CANTimeoutException ex) {
 //                ex.printStackTrace();
 //            }
-            Driving();
+        
+        //drive the robot with respect to controller inputs
+            DriveTrain.drive(lowerSensitivity(controller.getMagnitude()),
+                                                controller.getDirectionDegrees(),
+                                                lowerSensitivity(controller.getRawAxis(Constants.axis_rightStick_X)));
            
             Timer.delay(0.01);
          }
@@ -437,42 +411,36 @@ public class RobotTemplate extends SimpleRobot {
         //robot.println(DriverStationLCD.Line.kUser5, 1, "AccelZ: " + accel.getAcceleration(ADXL345_I2C.Axes.kZ));
         robot.updateLCD();
     }
-        
-    public void Driving(){
-            //chassis.mecanumDrive_Polar(left.getMagnitude(), left.getDirectionDegrees(), right.getX());
-            // chassis.mecanumDrive_Polar(/*addDeadZone*/(lowerSensitivity(controller.getMagnitude())), controller.getDirectionDegrees(), controller.getRawAxis(axis_rightStick_X));
-            chassis.mecanumDrive_Polar(/*addDeadZone*/(lowerSensitivity(controller.getMagnitude())), controller.getDirectionDegrees(), /*addDeadZone*/(lowerSensitivity(controller.getRawAxis(axis_rightStick_X))));
-            //chassis.mecanumDrive_Cartesian(/*addDeadZone*/(lowerSensitivity(controller.getX())), /*addDeadZone*/(lowerSensitivity(controller.getY())), controller.getTwist(), gyro.getAngle());
-    }
+
     
     //function to start hooking the latch
     private void startHookLatch(){
-        if (hookUpdateState == HOOK_READY){
+        if (hookUpdateState == Constants.HOOK_READY){
             hook.set(latched);
         }
     }
     
     //function to start the hook release process
     private void startHookRelease(){
-        if (hookUpdateState !=HOOK_READY)
+        if (hookUpdateState !=Constants.HOOK_READY)
             return;
         loaderPiston.set(DoubleSolenoid.Value.kForward);  
         hookUpdateStartTime = timer.get();
-        hookUpdateState = HOOK_WAIT_1;
+        hookUpdateState = Constants.HOOK_WAIT_1;
         }
     
     //update the hook status
     private void hookUpdate(){
-        if (hookUpdateState == HOOK_READY){
+        if (hookUpdateState == Constants.HOOK_READY){
             //Do Nothing...
         }
-            else if ((hookUpdateState == HOOK_WAIT_1) && ((timer.get() - hookUpdateStartTime) > 0.2)){
+            else if ((hookUpdateState == Constants.HOOK_WAIT_1) && ((timer.get() - hookUpdateStartTime) > 0.2)){
                 hook.set(unlatched);
-                hookUpdateState = HOOK_WAIT_2;
+                hookUpdateState = Constants.HOOK_WAIT_2;
             }
-            else if ((hookUpdateState == HOOK_WAIT_2) && ((timer.get() - hookUpdateStartTime) >1.2)){
+            else if ((hookUpdateState == Constants.HOOK_WAIT_2) && ((timer.get() - hookUpdateStartTime) >1.2)){
                 reload();
-                hookUpdateState = HOOK_READY;
+                hookUpdateState = Constants.HOOK_READY;
             }
     }
             
@@ -481,7 +449,7 @@ public class RobotTemplate extends SimpleRobot {
 //Encoder number
         int EncoderShootingValue = 0;
         
-        if(controller.getRawButton(button_leftBumper)){//lb
+        if(controller.getRawButton(Constants.button_leftBumper)){//lb
             if(!limitSwitch.get() && hook.get() != DoubleSolenoid.Value.kForward){
                 hook.set(DoubleSolenoid.Value.kForward);
             }
@@ -496,12 +464,12 @@ public class RobotTemplate extends SimpleRobot {
             }
         }
         
-        if(controller.getRawButton(button_rightBumper)){
+        if(controller.getRawButton(Constants.button_rightBumper)){
             hook.set(DoubleSolenoid.Value.kReverse);
         }
         pistonPrevState = hook.get();
         
-        if (controller.getRawButton(button_Back)){
+        if (controller.getRawButton(Constants.button_Back)){
             /*while(limitSwitch.get()){
                 winch1.set(-.25);
                 winch2.set(-.25);
@@ -511,13 +479,13 @@ public class RobotTemplate extends SimpleRobot {
             //winchEncoder.free();
             winchEncoder.reset();
         }
-        //loaderArm1.set(controller.getRawAxis(axis_triggers));
+        //loaderArm1.set(controller.getRawAxis(Constants.axis_triggers));
         
-        //loaderArm2.set(-controller.getRawAxis(axis_triggers));
+        //loaderArm2.set(-controller.getRawAxis(Constants.axis_triggers));
     }
         public void dash(){ //displays dashboard values
         
-            SmartDashboard.putNumber("controllerA1", controller.getRawAxis(axis_leftStick_X));
+            SmartDashboard.putNumber("controllerA1", controller.getRawAxis(Constants.axis_leftStick_X));
             //SmartDashboard.putNumber("AccelX", accel.getAcceleration(ADXL345_I2C.Axes.kX));
             //SmartDashboard.putNumber("AccelY", accel.getAcceleration(ADXL345_I2C.Axes.kY));
             //SmartDashboard.putNumber("AccelZ", accel.getAcceleration(ADXL345_I2C.Axes.kZ));
@@ -574,8 +542,8 @@ public class RobotTemplate extends SimpleRobot {
 //                double centerX = reports[0].center_mass_x_normalized;
 //                double centerY = reports[0].center_mass_y_normalized;
 //                double targetAngle = 47*(centerX);
-                double angle = pixelsHeight/pixelsV*(vertAngle*Math.PI/180);
-                double Vdistance = targetHeight/angle;
+                double angle = pixelsHeight/Constants.pixelsV*(Constants.vertAngle*Math.PI/180);
+                double Vdistance = Constants.targetHeight/angle;
                 visionDistance = Vdistance;
 
                 SmartDashboard.putNumber("Distance: ", Vdistance);
