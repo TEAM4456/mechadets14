@@ -174,25 +174,33 @@ public class RobotTemplate extends SimpleRobot {
         DriveTrain.setChassisSafteyEnabled(false);
         winchEncoder.reset();  //Used to make sure encoder is set to 0 at the start
 //        
-        chassis.mecanumDrive_Polar(1.0, 0.0, 0.0); //Mecanum Drive forward full speed
+        DriveTrain.drive(1.0, 0.0, 0.0); //Mecanum Drive forward full speed
         timer.delay(1.2);
-        chassis.mecanumDrive_Polar(0.0,0.0,0.0); //Turn off Mecanum Drive
-                          
-        while(winchEncoder.getDistance() > -7.0 && isAutonomous()){ //Unwind winch to belt length necessary to shot from starting position
+        DriveTrain.drive(0.0,0.0,0.0); //Turn off Mecanum Drive
+        
+        //Unwind winch to belt length necessary to shot from starting position
+        while(winchEncoder.getDistance() > -7.0 && isAutonomous()) 
+        {
             winch1.set(1.0);
             winch2.set(1.0);     
         }
-                if (!isAutonomous())
-                    return; 
-                winch1.set(0.0);
-                winch2.set(0.0);
-                Output();
-                dash();
-                loaderPiston.set(DoubleSolenoid.Value.kForward);  
-                timer.delay(0.5);
-                hook.set(unlatched); //The mechanism will launch ball after getting to desired encoder value
-                timer.delay(0.5);
-                reload();
+        
+        //will exit the autonomous method if !isAutonomous
+        if (!isAutonomous())
+            return;
+        
+        //will stop the winch
+        winch1.set(0.0);
+        winch2.set(0.0);
+        
+        Output();
+        dash();
+        
+        loaderPiston.set(DoubleSolenoid.Value.kForward);  
+        timer.delay(0.5);
+        hook.set(unlatched); //The mechanism will launch ball after getting to desired encoder value
+        timer.delay(0.5);
+        reload();
                 
 //           loaderPiston.set(DoubleSolenoid.Value.kForward);
 //           loaderArm1.set(-.75);
@@ -250,24 +258,25 @@ public class RobotTemplate extends SimpleRobot {
    }
 
     public void reload(){
-                   //make sure the latch is open
-                    hook.set(unlatched);
-                    winchEncoder.start();
-                    // *while the limit switch is pressed, push the winch negative
-                    while(limitSwitch.get()  && (isAutonomous() || isOperatorControl())){
-                        winch1.set(-1.0);
-                        winch2.set(-1.0);
-                    }//*set winch to 0
-                    winch1.set(0);
-                    winch2.set(0);
-                    hook.set(latched);
-                    loaderPiston.set(DoubleSolenoid.Value.kReverse);  
-                    Timer.delay(0.8);
-                    winchEncoder.reset();
-                    //while(winchEncoder.getDistance() > -4.8){
-                      //  winch1.set(1.0);
-                      //  winch2.set(1.0);
-                      // }
+        //make sure the latch is open
+         hook.set(unlatched);
+         winchEncoder.start();
+         // *while the limit switch is pressed, push the winch negative
+         while(limitSwitch.get()  && (isAutonomous() || isOperatorControl()))
+         {
+             winch1.set(-1.0);
+             winch2.set(-1.0);
+         }//*set winch to 0
+         winch1.set(0);
+         winch2.set(0);
+         hook.set(latched);
+         loaderPiston.set(DoubleSolenoid.Value.kReverse);  
+         Timer.delay(0.8);
+         winchEncoder.reset();
+         //while(winchEncoder.getDistance() > -4.8){
+           //  winch1.set(1.0);
+           //  winch2.set(1.0);
+           // }
                         
     }
     
