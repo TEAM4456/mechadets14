@@ -64,13 +64,10 @@ public class RobotTemplate extends SimpleRobot {
     Gyro gyro;
     ADXL345_I2C accel;
     DriverStationLCD robot = DriverStationLCD.getInstance();     //Drivers Station output box declaration
-    Jaguar winch1, winch2, loaderArm1, loaderArm2; //MotorRF(R)ight(F)ront, MotorLB(L)eft(B)ack
     Compressor compressor;
-    DoubleSolenoid hook, loaderPiston;
     Servo servoVertical, servoHorizontal;
     AxisCamera camera;
-    DigitalInput limitSwitch;
-    Encoder winchEncoder;
+
     //Relay ledLight;
     //left front 1
     //left back 2
@@ -78,12 +75,8 @@ public class RobotTemplate extends SimpleRobot {
     //right back 4
     
     
-    private int hookUpdateState = Constants.HOOK_READY;
-    private double hookUpdateStartTime = 0.0;
-    
     private int printCounter = 0;
-    private int encoderCounter;
-    private Value pistonPrevState;
+
     
     CriteriaCollection cc;
     
@@ -92,298 +85,134 @@ public class RobotTemplate extends SimpleRobot {
     
     //This allows the user of the driver netbook to manually adjust the distance he or she thinks they are from the target. Devin 
     //Preferences prefs;
-    double distance;
+    double distanceGuess;
     //double beltLength;
-    double superLong_BeltLength;
-    double long_BeltLength;
-    double mediumLong_BeltLength;
-    double mediumShort_BeltLength;
-    double short_BeltLength;
     Timer timer = new Timer();
 
-    private Value latched;
-    private Value unlatched;
     
     //declares and initializes components of robot
   
     
-    public void robotInit(){
-        //prefs = Preferences.getInstance();
-        
+    public void robotInit()
+    {
         SmartDashboard.putNumber("superLong_BeltLength", -18.0); //the two doubles that are written in the following line are default values and can be changed. Change the default values to the starting values of the robot in autonamous. Devin
         SmartDashboard.putNumber("long_BeltLength", -10.0); //the two doubles that are written in the following line are default values and can be changed. Change the default values to the starting values of the robot in autonamous. Devin
         SmartDashboard.putNumber("mediumLong_BeltLength", -7.0);//the two doubles that are written in the following line are default values and can be changed. Change the default values to the starting values of the robot in autonamous. Devin
         SmartDashboard.putNumber("mediumShort_BeltLength", -4.5);//the two doubles that are written in the following line are default values and can be changed. Change the default values to the starting values of the robot in autonamous. Devin
         SmartDashboard.putNumber("short_BeltLength", -2.0);//the two doubles that are written in the following line are default values and can be changed. Change the default values to the starting values of the robot in autonamous. Devin
-        //Assign Drive Train Motors
-            
-        winch1 = new Jaguar(5);
-        winch2= new Jaguar(6);
-        
-         // Assign Pick Up Arm Motors
-        loaderArm1 = new Jaguar(7);
-        loaderArm2 = new Jaguar(8);
         
         controller = new Joystick(1);
-        limitSwitch = new DigitalInput(3);//true = open; false = close
-        //gyro = new Gyro(1);
-        //accel = new ADXL345_I2C(1, ADXL345_I2C.DataFormat_Range.k4G);
-        winchEncoder = new Encoder(1, 2, false, CounterBase.EncodingType.k1X);
-        winchEncoder.setDistancePerPulse(1.0/750);//this pulse rate is for the competition robot. devin
-        //winchEncoder.setDistancePerPulse(1.0/100);//this pulse rate is for the practice robot. devin
-        //ledLight = new Relay(2);
+        
         compressor = new Compressor(4,1); //Assigns Compressor
         
-        hook = new DoubleSolenoid(1,2);  //Assigns Solenoid to Control Shooter Hook
-        latched = DoubleSolenoid.Value.kReverse; //Assigns variable to Shooter Hook Solenoid to unhook
-        unlatched = DoubleSolenoid.Value.kForward; //Assigns variable to Shooter Hook Solenoid to hook
         
-        loaderPiston = new DoubleSolenoid(3,4); //Assigns Solenoid to Control Pick Up Arm
-        pistonPrevState = DoubleSolenoid.Value.kOff; //Assigns Variable to Piston to Default state
+        
         timer.start(); //Initialize timer
-        winchEncoder.start();
         
-        //Vision Processing
-        //camera = AxisCamera.getInstance();
-        //cc = new CriteriaCollection();
-        //cc.addCriteria(NIVision.MeasurementType.IMAQ_MT_BOUNDING_RECT_WIDTH, 30, 400, false);
-        //cc.addCriteria(NIVision.MeasurementType.IMAQ_MT_BOUNDING_RECT_HEIGHT, 40, 400, false);
-        //visionDistance = 0;
-        //VisionCounter = 0;
-        //cc.addCriteria(NIVision.MeasurementType.IMAQ_MT_ORIENTATION, -0.2, 0.2, false);
-
-        //keep the following four lines
-//        autoChooser = new SendableChooser();
-//        autoChooser.addDefault("One Ball Autonomous", new OneBallAutonomous());
-//        autoChooser.addObject("Two Ball Autonomous", new TwoBallAutonomous());
-//        SmartDashboard.putData("Autonomous Mode Chooser", autoChooser);
+        
     }
     
     /**
      * This function is called once each time the robot enters autonomous mode.
      */
-
-   
-    public void autonomous() {   //need to work on this.
-        //the following two lines should remain unchanged!
-//        autonomousCommand = (Command)autoChooser.getSelected();
-//        autonomousCommand.start();
-         // gyro.reset();
-//        distanceCalculate();
-//        compressor.start();
+    public void autonomous() 
+    {
+        
         DriveTrain.setChassisSafteyEnabled(false);
-        winchEncoder.reset();  //Used to make sure encoder is set to 0 at the start
-//        
+        
+        //drive fwd for 1.2 seconds
         DriveTrain.drive(1.0, 0.0, 0.0); //Mecanum Drive forward full speed
         timer.delay(1.2);
         DriveTrain.drive(0.0,0.0,0.0); //Turn off Mecanum Drive
         
-        //Unwind winch to belt length necessary to shot from starting position
-        while(winchEncoder.getDistance() > -7.0 && isAutonomous()) 
-        {
-            winch1.set(1.0);
-            winch2.set(1.0);     
-        }
+        Shooter.unwindWinchAuto();
         
         //will exit the autonomous method if !isAutonomous
         if (!isAutonomous())
+        {
             return;
+        }
         
-        //will stop the winch
-        winch1.set(0.0);
-        winch2.set(0.0);
+        //stop the winch
+        Shooter.stopWinch();
         
         Output();
         dash();
         
-        loaderPiston.set(DoubleSolenoid.Value.kForward);  
-        timer.delay(0.5);
-        hook.set(unlatched); //The mechanism will launch ball after getting to desired encoder value
-        timer.delay(0.5);
-        reload();
-                
-//           loaderPiston.set(DoubleSolenoid.Value.kForward);
-//           loaderArm1.set(-.75);
-//            loaderArm2.set(.75);
-//            timer.delay(1.0);
-//            loaderArm1.set(0.0);
-//            loaderArm2.set(0.0);
-//            loaderPiston.set(DoubleSolenoid.Value.kReverse);
-//            timer.delay(1.0);
-               
-//                while(winchEncoder.getDistance() > -7.0 && isAutonomous()){ //Unwind winch to belt length necessary to shot from starting position
-//               winch1.set(1.0);
-//               winch2.set(1.0);     
-//                }
-//                if (!isAutonomous())
-//                    return; 
-//                winch1.set(0.0);
-//                winch2.set(0.0);
-//                Output();
-//                dash();
-//                loaderPiston.set(DoubleSolenoid.Value.kForward);  
-//                timer.delay(0.5);
-//                hook.set(unlatched); //The mechanism will launch ball after getting to desired encoder value
-//                timer.delay(0.5);
-//                reload();
-                
-//        // Need vision processing to determine if goal is hot or not placed here
-//            
-////  /*optional autonomous*/      
-////            loaderPiston.set(DoubleSolenoid.Value.kForward);
-////           loaderArm1.set(-.75);
-////            loaderArm2.set(.75);
-////            timer.delay(1.0);
-////            loaderArm1.set(0.0);
-////            loaderArm2.set(0.0);
-////            loaderPiston.set(DoubleSolenoid.Value.kReverse);
-////            timer.delay(1.0);
-////            
-////        
-////        
-////                while(winchEncoder.getDistance() > -4.5){ //Unwind winch to belt length necessary to shot from starting position
-////                    winch1.set(1.0);
-////                    winch2.set(1.0);
-////                }
-////                winch1.set(0.0);
-////                winch2.set(0.0);
-////                Output();
-////                dash();
-////             
-////        
-////        loaderPiston.set(DoubleSolenoid.Value.kForward);  
-////        hook.set(unlatched); //The mechanism will launch ball after getting to desired encoder value
-//// /*end of optional autonomous*/
-//       
-   }
-
-    public void reload(){
-        //make sure the latch is open
-         hook.set(unlatched);
-         winchEncoder.start();
-         // *while the limit switch is pressed, push the winch negative
-         while(limitSwitch.get()  && (isAutonomous() || isOperatorControl()))
-         {
-             winch1.set(-1.0);
-             winch2.set(-1.0);
-         }//*set winch to 0
-         winch1.set(0);
-         winch2.set(0);
-         hook.set(latched);
-         loaderPiston.set(DoubleSolenoid.Value.kReverse);  
-         Timer.delay(0.8);
-         winchEncoder.reset();
-         //while(winchEncoder.getDistance() > -4.8){
-           //  winch1.set(1.0);
-           //  winch2.set(1.0);
-           // }
-                        
-    }
-    
-    public void releaseWinch(double distanceOfWinch){//use the encoder values from testing. Devin
-        
-        
-            if(winchEncoder.getDistance() < distanceOfWinch){
-                distanceOfWinch-= Constants.WINCH_OVERSHOOT;
-
-                while(winchEncoder.getDistance() < distanceOfWinch){
-                    winch1.set(-1.0);
-                    winch2.set(-1.0);
-                }
-            }
-            else{
-                distanceOfWinch+= Constants.WINCH_OVERSHOOT;
-
-                while(winchEncoder.getDistance() > distanceOfWinch){
-                winch1.set(1.0);
-                winch2.set(1.0);
-            }
-            }
-                winch1.set(0.0);
-                winch2.set(0.0);
+        Shooter.shootAuto();
+        Shooter.reload();
     }
     
         /** 
      * This function is called once each time the robot enters operator control.
      */
     
-    public void operatorControl() {
+    public void operatorControl() 
+    {
         compressor.start();  
-        while(isOperatorControl() && isEnabled()){            
-            //double angle = gyro.getAngle();
-                     
-            //ledLight.set(Relay.Value.kReverse);
-        Output();
-        dash();
-//            if(VisionCounter >=100){
-//                distanceCalculate();
-//                VisionCounter = 0;
-//            }
-//            VisionCounter++;
-        winch1.set(controller.getRawAxis(Constants.axis_triggers));
-        winch2.set(controller.getRawAxis(Constants.axis_triggers));
-        
-        
-        //A will disengage the hook
-        if (controller.getRawButton(Constants.button_A)) 
-        {
-            loaderPiston.set(DoubleSolenoid.Value.kForward);  
-            chassis.mecanumDrive_Polar(0.0,0.0,0.0); //Turn off Mecanum Driv
-            Timer.delay(0.70);
-            hook.set(unlatched);
-            Timer.delay(0.5);
-            reload();
-          // startHookRelease();
-           //}else if (controller.getRawButton(Constants.button_B)){ //this means that you press the A  button to engage the hook. (allow the ladder to back) Devin
-           //    startHookLatch();
-         }
-            //hookUpdate();       
-            if(controller.getRawButton(Constants.button_leftBumper)){
-                releaseWinch(SmartDashboard.getNumber("superLong_BeltLength", -18.0));
+        while(isOperatorControl() && isEnabled())
+        {            
+            Output();
+            dash();
+
+            // Controls the shooter winches with the xbox triggers
+            Shooter.setWinches(controller.getRawAxis(Constants.axis_triggers));
+
+            //Button A will disengage the hook
+            if (controller.getRawButton(Constants.button_A)) 
+            {
+                Shooter.shoot();
             }
-            if (controller.getRawButton(Constants.button_Start)) {
-                //releaseWinch(prefs.getDouble("belt", -10.0));
-                releaseWinch(SmartDashboard.getNumber("long_BeltLength", -10.0));
+            
+            
+            //specified button will release winch to specified distance
+            if(controller.getRawButton(Constants.button_leftBumper))
+            {
+                Shooter.releaseWinch(SmartDashboard.getNumber("superLong_BeltLength", -18.0));
+            }
+            if (controller.getRawButton(Constants.button_Start)) 
+            {
+                //Shooter.releaseWinch(prefs.getDouble("belt", -10.0));
+                Shooter.releaseWinch(SmartDashboard.getNumber("long_BeltLength", -10.0));
             }      
-            if(controller.getRawButton(Constants.button_X)){
-                releaseWinch(SmartDashboard.getNumber("mediumShort_BeltLength", -4.5));
+            if(controller.getRawButton(Constants.button_X))
+            {
+                Shooter.releaseWinch(SmartDashboard.getNumber("mediumShort_BeltLength", -4.5));
             }
-            if(controller.getRawButton(Constants.button_B)){
-                releaseWinch(SmartDashboard.getNumber("short_BeltLength", -2.0));
+            if(controller.getRawButton(Constants.button_B))
+            {
+                Shooter.releaseWinch(SmartDashboard.getNumber("short_BeltLength", -2.0));
             }
-            if(controller.getRawButton(Constants.button_Y)){
-                releaseWinch(SmartDashboard.getNumber("mediumLong_BeltLength", -7.0));
+            if(controller.getRawButton(Constants.button_Y))
+            {
+                Shooter.releaseWinch(SmartDashboard.getNumber("mediumLong_BeltLength", -7.0));
             }
-              //*if button 7 (Back button) is pressed, 
-            if (controller.getRawButton(Constants.button_Back)){
-                reload();   
+            
+            
+            //if the Back Button (Button 7) is pressed, it will reload
+            if (controller.getRawButton(Constants.button_Back))
+            {
+                Shooter.reload();   
             }
-        
-        if (controller.getRawButton(Constants.button_rightBumper)){
-                    loaderPiston.set(DoubleSolenoid.Value.kForward);
-                    loaderArm1.set(-.75);
-                    loaderArm2.set(.75);
-        }
-        else{
-                    loaderPiston.set(DoubleSolenoid.Value.kReverse);
-                    loaderArm1.set(0);
-                    loaderArm2.set(0);
-        }
-                
-        
-//            try {
-//                Shooting();
-//            } catch (CANTimeoutException ex) {
-//                ex.printStackTrace();
-//            }
-        
-        //drive the robot with respect to controller inputs
+            
+            //while the Right Bumper is pressed, it will pick up the ball
+            if (controller.getRawButton(Constants.button_rightBumper))
+            {
+                Loader.pickUpBall();
+            }
+            //while the Right Bumper is not pressed, it will go back to its original position
+            else
+            {
+                Loader.resetArms();
+            }
+
+            //drive the robot with respect to controller inputs
             DriveTrain.drive(lowerSensitivity(controller.getMagnitude()),
-                                                controller.getDirectionDegrees(),
-                                                lowerSensitivity(controller.getRawAxis(Constants.axis_rightStick_X)));
-           
+                            controller.getDirectionDegrees(),
+                            lowerSensitivity(controller.getRawAxis(Constants.axis_rightStick_X)));
+
             Timer.delay(0.01);
-         }
+        }
         
         compressor.stop();   
     }
@@ -391,17 +220,23 @@ public class RobotTemplate extends SimpleRobot {
     /**
      * This function is called once each time the robot enters test mode.
      */
-    public void test(){
+    public void test()
+    {
+        
     }
     
     /*
-     * Primary control methods including camera, shooting, driving, picking up, and output which are called once per loop through operator control 
-    */
+     * Primary control methods including camera, shooting, driving, picking up, 
+     * and output which are called once per loop through operator control 
+     */
     
-    public void Output() {
+    public void Output() 
+    {
         printCounter++;
 
-          if (printCounter == 100) {       //this will prevent the print screen from getting cluttered
+        if (printCounter == 100) 
+        {       
+            //this will prevent the print screen from getting cluttered
             robot.println(DriverStationLCD.Line.kUser1, 1, "                                        ");
             robot.println(DriverStationLCD.Line.kUser2, 1, "                                        ");
             robot.println(DriverStationLCD.Line.kUser3, 1, "                                        ");
@@ -414,109 +249,40 @@ public class RobotTemplate extends SimpleRobot {
 
         robot.println(DriverStationLCD.Line.kUser6, 1, "VP Distance: " + visionDistance);
         //robot.println(DriverStationLCD.Line.kUser1, 1, "GyroAngle " + gyro.getAngle());
-        robot.println(DriverStationLCD.Line.kUser2, 1, "Encoder Winch " + winchEncoder.getDistance());
+        robot.println(DriverStationLCD.Line.kUser2, 1, "Encoder Winch " + Shooter.getWinchDistance());
         //robot.println(DriverStationLCD.Line.kUser3, 1, "AccelX: " + accel.getAcceleration(ADXL345_I2C.Axes.kX));
         //robot.println(DriverStationLCD.Line.kUser4, 1, "AccelY: " + accel.getAcceleration(ADXL345_I2C.Axes.kY));
         //robot.println(DriverStationLCD.Line.kUser5, 1, "AccelZ: " + accel.getAcceleration(ADXL345_I2C.Axes.kZ));
         robot.updateLCD();
     }
-
-    
-    //function to start hooking the latch
-    private void startHookLatch(){
-        if (hookUpdateState == Constants.HOOK_READY){
-            hook.set(latched);
-        }
-    }
-    
-    //function to start the hook release process
-    private void startHookRelease(){
-        if (hookUpdateState !=Constants.HOOK_READY)
-            return;
-        loaderPiston.set(DoubleSolenoid.Value.kForward);  
-        hookUpdateStartTime = timer.get();
-        hookUpdateState = Constants.HOOK_WAIT_1;
-        }
-    
-    //update the hook status
-    private void hookUpdate(){
-        if (hookUpdateState == Constants.HOOK_READY){
-            //Do Nothing...
-        }
-            else if ((hookUpdateState == Constants.HOOK_WAIT_1) && ((timer.get() - hookUpdateStartTime) > 0.2)){
-                hook.set(unlatched);
-                hookUpdateState = Constants.HOOK_WAIT_2;
-            }
-            else if ((hookUpdateState == Constants.HOOK_WAIT_2) && ((timer.get() - hookUpdateStartTime) >1.2)){
-                reload();
-                hookUpdateState = Constants.HOOK_READY;
-            }
-    }
             
     
-    public void Shooting(){
-//Encoder number
-        int EncoderShootingValue = 0;
-        
-        if(controller.getRawButton(Constants.button_leftBumper)){//lb
-            if(!limitSwitch.get() && hook.get() != DoubleSolenoid.Value.kForward){
-                hook.set(DoubleSolenoid.Value.kForward);
-            }
-            if(limitSwitch.get()){
-                winch1.set(.5);
-                winch2.set(.5);
-            }
-            
-            else if(!limitSwitch.get() && hook.get() == DoubleSolenoid.Value.kForward && winchEncoder.get() < EncoderShootingValue){
-                winch1.set(-.5);
-                winch2.set(-.5);
-            }
-        }
-        
-        if(controller.getRawButton(Constants.button_rightBumper)){
-            hook.set(DoubleSolenoid.Value.kReverse);
-        }
-        pistonPrevState = hook.get();
-        
-        if (controller.getRawButton(Constants.button_Back)){
-            /*while(limitSwitch.get()){
-                winch1.set(-.25);
-                winch2.set(-.25);
-            }
-            winch1.set(0);
-            *///winch2.set(0);
-            //winchEncoder.free();
-            winchEncoder.reset();
-        }
-        //loaderArm1.set(controller.getRawAxis(Constants.axis_triggers));
-        
-        //loaderArm2.set(-controller.getRawAxis(Constants.axis_triggers));
+    //displays dashboard values
+    public void dash()
+    {
+        SmartDashboard.putNumber("controllerA1", controller.getRawAxis(Constants.axis_leftStick_X));
+        //SmartDashboard.putNumber("AccelX", accel.getAcceleration(ADXL345_I2C.Axes.kX));
+        //SmartDashboard.putNumber("AccelY", accel.getAcceleration(ADXL345_I2C.Axes.kY));
+        //SmartDashboard.putNumber("AccelZ", accel.getAcceleration(ADXL345_I2C.Axes.kZ));
+        //SmartDashboard.putNumber("Angle of Ladder", com.sun.squawk.util.MathUtils.atan2((double)accel.getAcceleration(ADXL345_I2C.Axes.kX), (double)accel.getAcceleration(ADXL345_I2C.Axes.kY)));
+        SmartDashboard.putNumber("winchEncoder", Shooter.getWinchDistance();
+        //SmartDashboard.putNumber("Gyro", gyro.getAngle());
+        SmartDashboard.putNumber("Distance", distanceGuess);
+
+        SmartDashboard.putNumber("Super Long Belt Length", Shooter.superLong_BeltLength);
+        SmartDashboard.putNumber("Long Belt Length", Shooter.long_BeltLength);
+        SmartDashboard.putNumber("Medium Short Belt Length", Shooter.mediumShort_BeltLength);
+        SmartDashboard.putNumber("Medium Long Belt Length", Shooter.mediumLong_BeltLength);
+        SmartDashboard.putNumber("Short Belt Length", Shooter.short_BeltLength);
+
+
+        SmartDashboard.putNumber("winchEncoderDisPerPulse", Shooter.winchEncoder.getRaw());
+        SmartDashboard.putBoolean("Limit Switch", Shooter.limitSwitch.get() );
+        SmartDashboard.putNumber("Distance from Target", distanceGuess);
     }
-        public void dash(){ //displays dashboard values
-        
-            SmartDashboard.putNumber("controllerA1", controller.getRawAxis(Constants.axis_leftStick_X));
-            //SmartDashboard.putNumber("AccelX", accel.getAcceleration(ADXL345_I2C.Axes.kX));
-            //SmartDashboard.putNumber("AccelY", accel.getAcceleration(ADXL345_I2C.Axes.kY));
-            //SmartDashboard.putNumber("AccelZ", accel.getAcceleration(ADXL345_I2C.Axes.kZ));
-            //SmartDashboard.putNumber("Angle of Ladder", com.sun.squawk.util.MathUtils.atan2((double)accel.getAcceleration(ADXL345_I2C.Axes.kX), (double)accel.getAcceleration(ADXL345_I2C.Axes.kY)));
-            SmartDashboard.putNumber("winchEncoder", winchEncoder.getDistance());
-            //SmartDashboard.putNumber("Gyro", gyro.getAngle());
-            SmartDashboard.putNumber("Distance", distance);
-            
-            SmartDashboard.putNumber("Super Long Belt Length", superLong_BeltLength);
-            SmartDashboard.putNumber("Long Belt Length", long_BeltLength);
-            SmartDashboard.putNumber("Medium Short Belt Length", mediumShort_BeltLength);
-            SmartDashboard.putNumber("Medium Long Belt Length", mediumLong_BeltLength);
-            SmartDashboard.putNumber("Short Belt Length", short_BeltLength);
 
-
-            SmartDashboard.putNumber("winchEncoderDisPerPulse", winchEncoder.getRaw());
-            SmartDashboard.putBoolean("Limit Switch",limitSwitch.get() );
-            SmartDashboard.putNumber("Distance from Target", distance);
-
-        }
-
-    private void distanceCalculate() {
+    private void distanceCalculate() 
+    {
         ColorImage image = null;
         BinaryImage thresholdRGBImage = null;
         BinaryImage thresholdHSIImage = null;
@@ -524,7 +290,8 @@ public class RobotTemplate extends SimpleRobot {
         BinaryImage convexHullImage=null;
         BinaryImage filteredImage = null;
         
-        try {
+        try 
+        {
             image = camera.getImage();
             camera.writeBrightness(50);
             image.write("originalImage.jpg");
@@ -546,7 +313,8 @@ public class RobotTemplate extends SimpleRobot {
 //                robot.println(DriverStationLCD.Line.kUser6, 1, ""+reports[i].center_mass_x);
 //                System.out.println(reports[i].center_mass_x);
 //            }
-            if (reports.length > 0) {
+            if (reports.length > 0) 
+            {
                 double pixelsHeight = reports[0].boundingRectHeight;
 //                double centerX = reports[0].center_mass_x_normalized;
 //                double centerY = reports[0].center_mass_y_normalized;
@@ -556,21 +324,33 @@ public class RobotTemplate extends SimpleRobot {
                 visionDistance = Vdistance;
 
                 SmartDashboard.putNumber("Distance: ", Vdistance);
-            } else {
+            } 
+            else 
+            {
 //                robot.println(DriverStationLCD.Line.kUser6, 1, "no targets. :(");
             }
-        }catch (Exception ex) {
-            ex.printStackTrace();
-        }finally{
         }
-        try {
+        catch (Exception ex) 
+        {
+            ex.printStackTrace();
+        }
+        finally
+        {
+            
+        }
+        
+        
+        try 
+        {
             filteredImage.free();
             convexHullImage.free();
             bigObjectsImage.free();
             //thresholdRGBImage.free();
             thresholdHSIImage.free();
             image.free();
-        } catch (NIVisionException ex) {
+        } 
+        catch (NIVisionException ex) 
+        {
             ex.printStackTrace();
         }
     }
@@ -579,14 +359,18 @@ public class RobotTemplate extends SimpleRobot {
      * Misc utility methods that might be called by various tasks
     */
     
-    public double lowerSensitivity(double magnitude){
+    // This lowers the sensitivity of the input (the controls)
+    public double lowerSensitivity(double magnitude)
+    {
         double f = (com.sun.squawk.util.MathUtils.pow(magnitude,3));
         return f;
     }
     
-    public double addDeadZone(double speed){
+    public double addDeadZone(double speed)
+    {
         double deadzone = .1;
-        if(Math.abs(speed)<deadzone){
+        if(Math.abs(speed)<deadzone)
+        {
             speed = 0;
         }
         return speed;
