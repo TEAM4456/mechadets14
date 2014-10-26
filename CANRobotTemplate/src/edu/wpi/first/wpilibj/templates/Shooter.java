@@ -1,9 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package edu.wpi.first.wpilibj.templates;
 
 import edu.wpi.first.wpilibj.CounterBase;
@@ -15,37 +9,37 @@ import edu.wpi.first.wpilibj.Timer;
 
 /**
  *
- * @author samega15
+ * @author Mech Cadets
  */
 public class Shooter
 {
-    Jaguar winch1, winch2;
-    DoubleSolenoid hook;
-    DigitalInput limitSwitch;
-    Encoder winchEncoder;
+    static Jaguar winch1, winch2;
+    static DoubleSolenoid hook;
+    static DigitalInput limitSwitch;
+    static Encoder winchEncoder;
     
-    private int hookUpdateState = Constants.HOOK_READY;
-    private double hookUpdateStartTime = 0.0;
-    private int encoderCounter;
-    private DoubleSolenoid.Value pistonPrevState;
+    private static int hookUpdateState = Constants.HOOK_READY;
+    private static double hookUpdateStartTime = 0.0;
+    private static int encoderCounter;
+    private static DoubleSolenoid.Value pistonPrevState;
     
-    double superLong_BeltLength;
-    double long_BeltLength;
-    double mediumLong_BeltLength;
-    double mediumShort_BeltLength;
-    double short_BeltLength;
+    static double superLong_BeltLength;
+    static double long_BeltLength;
+    static double mediumLong_BeltLength;
+    static double mediumShort_BeltLength;
+    static double short_BeltLength;
     
-    private DoubleSolenoid.Value latched;
-    private DoubleSolenoid.Value unlatched;
+    private static DoubleSolenoid.Value latched;
+    private static DoubleSolenoid.Value unlatched;
     
-    public void init()
+    public static void init()
     {
         winch1 = new Jaguar(5);
         winch2= new Jaguar(6);
         limitSwitch = new DigitalInput(3);//true = open; false = close
         
         winchEncoder = new Encoder(1, 2, false, CounterBase.EncodingType.k1X);
-        winchEncoder.setDistancePerPulse(1.0/750);//this pulse rate is for the competition robot. devin
+        winchEncoder.setDistancePerPulse(1.0/750);//This pulse rate is for the competition robot
         
         hook = new DoubleSolenoid(1,2);  //Assigns Solenoid to Control Shooter Hook
         latched = DoubleSolenoid.Value.kReverse; //Assigns variable to Shooter Hook Solenoid to unhook
@@ -55,31 +49,33 @@ public class Shooter
         winchEncoder.start();
     }
     
-    public void setWinches(double winchValue)
+    //Sets the winches to a given value
+    public static void setWinches(double winchValue)
     {
         winch1.set(winchValue);
         winch2.set(winchValue);
     }
     
+    //Returns the winch distance
     public static double getWinchDistance()
     {
         return winchEncoder.getDistance();
     }
     
     //This opens the limit switch
-    public void openLimitSwitch()
+    public static void openLimitSwitch()
     {
         limitSwitch = true;
     }
     
     //This closes the limit switch
-    public void closeLimitSwitch()
+    public static void closeLimitSwitch()
     {
         limitSwitch = false;
     }
     
     //This shoots the ball
-    public void shoot()
+    public static void shoot()
     {
         Loader.setPiston(DoubleSolenoid.Value.kForward);  
         chassis.mecanumDrive_Polar(0.0,0.0,0.0); //Turn off Mecanum Driv
@@ -90,10 +86,9 @@ public class Shooter
     }
     
     //This releases the winch to a specified distance
-    public void releaseWinch(double distanceOfWinch)
+    public static void releaseWinch(double distanceOfWinch)
     {   
-        //use the encoder values from testing. Devin
-        
+        //Use the encoder values from testing
         
         if(winchEncoder.getDistance() < distanceOfWinch)
         {
@@ -101,8 +96,7 @@ public class Shooter
 
             while(winchEncoder.getDistance() < distanceOfWinch)
             {
-                winch1.set(-1.0);
-                winch2.set(-1.0);
+                this.setWinches(-1.0);
             }
         }
         else
@@ -111,21 +105,18 @@ public class Shooter
 
             while(winchEncoder.getDistance() > distanceOfWinch)
             {
-                winch1.set(1.0);
-                winch2.set(1.0);
+                this.setWinches(1.0);
             }
         }
-        winch1.set(0.0);
-        winch2.set(0.0);
+        this.setWinches(0.0);
     }
     
-    public void stopWinch()
+    public static void stopWinch()
     {
-        winch1.set(0.0);
-        winch2.set(0.0);
+        this.setWinches(0.0);
     }
     
-    public void unwindWinchAuto()
+    public static void unwindWinchAuto()
     {
         //unwind belt to value -7.0 for autonomous
         winchEncoder.reset();  //Used to make sure encoder is set to 0 at the start
@@ -133,12 +124,11 @@ public class Shooter
         //Unwind winch to belt length necessary to shot from starting position
         while(winchEncoder.getDistance() > -7.0 && RobotTemplate.isAutonomous()) 
         {
-            winch1.set(1.0);
-            winch2.set(1.0);     
+            this.setWinches(1.0);   
         }
     }
     
-    public void shootAuto()
+    public static void shootAuto()
     {
         Loader.setPiston(DoubleSolenoid.Value.kForward);  
         RobotTemplate.timer.delay(0.5);
@@ -146,20 +136,18 @@ public class Shooter
         RobotTemplate.timer.delay(0.5);
     }
     
-    public void reload()
+    public static void reload()
     {
         //make sure the latch is open
         hook.set(unlatched);
         winchEncoder.start();
-        // *while the limit switch is pressed, push the winch negative
+        //while the limit switch is pressed, push the winch negative
         while(limitSwitch.get()  && (isAutonomous() || isOperatorControl()))
         {
-            winch1.set(-1.0);
-            winch2.set(-1.0);
+            this.setWinches(-1.0);
         }
-        //*set winch to 0
-        winch1.set(0);
-        winch2.set(0);
+        //Set winch to 0
+        this.setWinches(0.0);
         hook.set(latched);
         Loader.setPiston(DoubleSolenoid.Value.kReverse);  
         Timer.delay(0.8);
@@ -168,7 +156,7 @@ public class Shooter
     
     //function to start hooking the latch
     //Not being used right now
-    public void startHookLatch()
+    public static void startHookLatch()
     {
         if (hookUpdateState == Constants.HOOK_READY)
         {
@@ -178,7 +166,7 @@ public class Shooter
     
     //function to start the hook release process
     //Not being used right now
-    public void startHookRelease()
+    public static void startHookRelease()
     {
         if (hookUpdateState !=Constants.HOOK_READY)
         {
@@ -191,7 +179,7 @@ public class Shooter
     
     //update the hook status
     //Not being used right now
-    public void hookUpdate()
+    public static void hookUpdate()
     {
         if (hookUpdateState == Constants.HOOK_READY)
         {

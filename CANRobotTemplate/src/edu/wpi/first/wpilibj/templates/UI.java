@@ -30,7 +30,7 @@ public class UI
         SmartDashboard.putNumber("short_BeltLength", -2.0);
     }
     
-    public void output() 
+    public static void output() 
     {
         //Increments the print counter
         printCounter++;
@@ -51,25 +51,22 @@ public class UI
         } 
         
         outputBox.println(DriverStationLCD.Line.kUser1, 1, "                                        ");
-        outputBox.println(DriverStationLCD.Line.kUser2, 1, "Encoder Winch " + Shooter.getWinchDistance()); //print encode winch distance
+        outputBox.println(DriverStationLCD.Line.kUser2, 1, "Encoder Winch " + Shooter.getWinchDistance()); //prints the encode winch distance
         outputBox.println(DriverStationLCD.Line.kUser3, 1, "                                        ");
         outputBox.println(DriverStationLCD.Line.kUser4, 1, "                                        ");
         outputBox.println(DriverStationLCD.Line.kUser5, 1, "                                        ");
-        outputBox.println(DriverStationLCD.Line.kUser6, 1, "VP Distance: " + RobotTemplate.visionDistance); // print visionDistance
-
+        outputBox.println(DriverStationLCD.Line.kUser6, 1, "VP Distance: " + RobotTemplate.visionDistance); // prints the vision distance
+        //this updates the driver's station output screen, allowing everything to show up correctly
         outputBox.updateLCD();
     }
     
-    //displays dashboard values
-    public void dash()
+    //This displays the dashboard values
+    public static void dash()
     {
         SmartDashboard.putNumber("controllerA1", controller.getRawAxis(Constants.axis_leftStick_X));
-        //SmartDashboard.putNumber("AccelX", accel.getAcceleration(ADXL345_I2C.Axes.kX));
-        //SmartDashboard.putNumber("AccelY", accel.getAcceleration(ADXL345_I2C.Axes.kY));
-        //SmartDashboard.putNumber("AccelZ", accel.getAcceleration(ADXL345_I2C.Axes.kZ));
-        //SmartDashboard.putNumber("Angle of Ladder", com.sun.squawk.util.MathUtils.atan2((double)accel.getAcceleration(ADXL345_I2C.Axes.kX), (double)accel.getAcceleration(ADXL345_I2C.Axes.kY)));
+        
         SmartDashboard.putNumber("winchEncoder", Shooter.getWinchDistance();
-        //SmartDashboard.putNumber("Gyro", gyro.getAngle());
+        
         SmartDashboard.putNumber("Distance", distanceGuess);
 
         SmartDashboard.putNumber("Super Long Belt Length", Shooter.superLong_BeltLength);

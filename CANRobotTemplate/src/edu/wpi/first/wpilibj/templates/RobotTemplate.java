@@ -42,9 +42,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.templates.RobotTemplate;
 import edu.wpi.first.wpilibj.command.Scheduler;
 
-//test serge
-
-
+//test Mech Cadets
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -55,76 +53,62 @@ import edu.wpi.first.wpilibj.command.Scheduler;
  */
 public class RobotTemplate extends SimpleRobot {
     
-    //the following two lines create the variables to hold the Autonomous command
+    //The following two lines create the variables to hold the Autonomous command
     Command autonomousCommand; 
     SendableChooser autoChooser;
-    //public static SendableChooser autoChooser;
     
     Joystick controller;
     Gyro gyro;
     ADXL345_I2C accel;
     Compressor compressor;
     Servo servoVertical, servoHorizontal;
-    AxisCamera camera;
 
     //Relay ledLight;
     //left front 1
     //left back 2
     //right front 3
     //right back 4
-    
-    
-
-    
+   
     CriteriaCollection cc;
     
-    private double visionDistance;
-    private double VisionCounter;
-    
-    //This allows the user of the driver netbook to manually adjust the distance he or she thinks they are from the target. Devin 
-    //Preferences prefs;
+    //This allows the user of the driver netbook to manually adjust the distance he or she thinks they are from the target
     double distanceGuess;
-    //double beltLength;
     Timer timer = new Timer();
-
-    
-    //declares and initializes components of robot
-  
     
     public void robotInit()
     {
+        //uses the init methods from the other classes
+        DriveTrain.init();
+        Loader.init();
+        Shooter.init();
+        UI.init();
         
         controller = new Joystick(1);
-        
         compressor = new Compressor(4,1); //Assigns Compressor
-        
         timer.start(); //Initialize timer
-        
-        
     }
     
     /**
-     * This function is called once each time the robot enters autonomous mode.
+     * This autonomous function is called once each time the robot enters autonomous mode.
      */
-    public void autonomous() 
+    public void autonomous()
     {
-        
         DriveTrain.setChassisSafteyEnabled(false);
         
-        //drive fwd for 1.2 seconds
+        //The robot will drive forward for 1.2 seconds
         DriveTrain.drive(1.0, 0.0, 0.0); //Mecanum Drive forward full speed
         timer.delay(1.2);
         DriveTrain.drive(0.0,0.0,0.0); //Turn off Mecanum Drive
         
         Shooter.unwindWinchAuto();
         
-        //will exit the autonomous method if !isAutonomous
+        //The robot will exit autonomous mode if !isAutonomous
         if (!isAutonomous())
         {
             return;
         }
         
-        //stop the winch
+        //This stops the winch
         Shooter.stopWinch();
         
         UI.output();
@@ -134,10 +118,10 @@ public class RobotTemplate extends SimpleRobot {
         Shooter.reload();
     }
     
-        /** 
+    /** 
      * This function is called once each time the robot enters operator control.
      */
-    
+
     public void operatorControl() 
     {
         compressor.start();  
@@ -146,26 +130,28 @@ public class RobotTemplate extends SimpleRobot {
             UI.output();
             UI.dash();
 
-            // Controls the shooter winches with the xbox triggers
+            //Controls the shooter winches with the xbox triggers
             Shooter.setWinches(controller.getRawAxis(Constants.axis_triggers));
 
-            //Button A will disengage the hook
+            //Button A will shoot the ball when pressed
             if (controller.getRawButton(Constants.button_A)) 
             {
                 Shooter.shoot();
             }
-            
-            
-            //specified button will release winch to specified distance
+
+            //A Specified button will release winch to a specified distance when pressed
             if(controller.getRawButton(Constants.button_leftBumper))
             {
                 Shooter.releaseWinch(SmartDashboard.getNumber("superLong_BeltLength", -18.0));
             }
             if (controller.getRawButton(Constants.button_Start)) 
             {
-                //Shooter.releaseWinch(prefs.getDouble("belt", -10.0));
                 Shooter.releaseWinch(SmartDashboard.getNumber("long_BeltLength", -10.0));
-            }      
+            }
+            if(controller.getRawButton(Constants.button_Y))
+            {
+                Shooter.releaseWinch(SmartDashboard.getNumber("mediumLong_BeltLength", -7.0));
+            }
             if(controller.getRawButton(Constants.button_X))
             {
                 Shooter.releaseWinch(SmartDashboard.getNumber("mediumShort_BeltLength", -4.5));
@@ -174,30 +160,25 @@ public class RobotTemplate extends SimpleRobot {
             {
                 Shooter.releaseWinch(SmartDashboard.getNumber("short_BeltLength", -2.0));
             }
-            if(controller.getRawButton(Constants.button_Y))
-            {
-                Shooter.releaseWinch(SmartDashboard.getNumber("mediumLong_BeltLength", -7.0));
-            }
             
-            
-            //if the Back Button (Button 7) is pressed, it will reload
+            //If the Back Button (Button 7) is pressed, it will reload
             if (controller.getRawButton(Constants.button_Back))
             {
                 Shooter.reload();   
             }
             
-            //while the Right Bumper is pressed, it will pick up the ball
+            //While the Right Bumper is pressed, it will pick up the ball
             if (controller.getRawButton(Constants.button_rightBumper))
             {
                 Loader.pickUpBall();
             }
-            //while the Right Bumper is not pressed, it will go back to its original position
+            //While the Right Bumper is not pressed, it will go back to its original position
             else
             {
                 Loader.resetArms();
             }
 
-            //drive the robot with respect to controller inputs
+            //This will drive the robot with respect to controller inputs
             DriveTrain.drive(lowerSensitivity(controller.getMagnitude()),
                             controller.getDirectionDegrees(),
                             lowerSensitivity(controller.getRawAxis(Constants.axis_rightStick_X)));
@@ -215,86 +196,12 @@ public class RobotTemplate extends SimpleRobot {
     {
         
     }
-
-    private void distanceCalculate() 
-    {
-        ColorImage image = null;
-        BinaryImage thresholdRGBImage = null;
-        BinaryImage thresholdHSIImage = null;
-        BinaryImage bigObjectsImage= null;
-        BinaryImage convexHullImage=null;
-        BinaryImage filteredImage = null;
-        
-        try 
-        {
-            image = camera.getImage();
-            camera.writeBrightness(50);
-            image.write("originalImage.jpg");
-            thresholdRGBImage = image.thresholdRGB(0, 45, 175, 255, 0, 47);
-            
-            thresholdRGBImage.write("thresholdRGBImage.bmp");
-            thresholdHSIImage = image.thresholdHSI(0, 255, 0, 255, 200, 255);
-            thresholdHSIImage.write("thresholdHSIImage.bmp");
-            bigObjectsImage = thresholdHSIImage.removeSmallObjects(false, 2);
-            bigObjectsImage.write("bigObjectsImage.bmp");
-            convexHullImage = bigObjectsImage.convexHull(false);
-            convexHullImage.write("convexHullImage.bmp");
-            filteredImage = convexHullImage.particleFilter(cc);
-            filteredImage.write("filteredImage.bmp");
-            ParticleAnalysisReport[] reports = filteredImage.getOrderedParticleAnalysisReports();
-            
-            String output;
-//            for(int i = 0; i<reports.length+1; i++) {
-//                robot.println(DriverStationLCD.Line.kUser6, 1, ""+reports[i].center_mass_x);
-//                System.out.println(reports[i].center_mass_x);
-//            }
-            if (reports.length > 0) 
-            {
-                double pixelsHeight = reports[0].boundingRectHeight;
-//                double centerX = reports[0].center_mass_x_normalized;
-//                double centerY = reports[0].center_mass_y_normalized;
-//                double targetAngle = 47*(centerX);
-                double angle = pixelsHeight/Constants.pixelsV*(Constants.vertAngle*Math.PI/180);
-                double Vdistance = Constants.targetHeight/angle;
-                visionDistance = Vdistance;
-
-                SmartDashboard.putNumber("Distance: ", Vdistance);
-            } 
-            else 
-            {
-//                robot.println(DriverStationLCD.Line.kUser6, 1, "no targets. :(");
-            }
-        }
-        catch (Exception ex) 
-        {
-            ex.printStackTrace();
-        }
-        finally
-        {
-            
-        }
-        
-        
-        try 
-        {
-            filteredImage.free();
-            convexHullImage.free();
-            bigObjectsImage.free();
-            //thresholdRGBImage.free();
-            thresholdHSIImage.free();
-            image.free();
-        } 
-        catch (NIVisionException ex) 
-        {
-            ex.printStackTrace();
-        }
-    }
     
     /*
-     * Misc utility methods that might be called by various tasks
-    */
+     * These are some misc utility methods that might be called by various tasks
+     */
     
-    // This lowers the sensitivity of the input (the controls)
+    //This lowers the sensitivity of the input (the controls)
     public double lowerSensitivity(double magnitude)
     {
         double f = (com.sun.squawk.util.MathUtils.pow(magnitude,3));
