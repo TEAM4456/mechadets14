@@ -63,7 +63,6 @@ public class RobotTemplate extends SimpleRobot {
     Joystick controller;
     Gyro gyro;
     ADXL345_I2C accel;
-    DriverStationLCD robot = DriverStationLCD.getInstance();     //Drivers Station output box declaration
     Compressor compressor;
     Servo servoVertical, servoHorizontal;
     AxisCamera camera;
@@ -75,7 +74,6 @@ public class RobotTemplate extends SimpleRobot {
     //right back 4
     
     
-    private int printCounter = 0;
 
     
     CriteriaCollection cc;
@@ -95,17 +93,10 @@ public class RobotTemplate extends SimpleRobot {
     
     public void robotInit()
     {
-        SmartDashboard.putNumber("superLong_BeltLength", -18.0); //the two doubles that are written in the following line are default values and can be changed. Change the default values to the starting values of the robot in autonamous. Devin
-        SmartDashboard.putNumber("long_BeltLength", -10.0); //the two doubles that are written in the following line are default values and can be changed. Change the default values to the starting values of the robot in autonamous. Devin
-        SmartDashboard.putNumber("mediumLong_BeltLength", -7.0);//the two doubles that are written in the following line are default values and can be changed. Change the default values to the starting values of the robot in autonamous. Devin
-        SmartDashboard.putNumber("mediumShort_BeltLength", -4.5);//the two doubles that are written in the following line are default values and can be changed. Change the default values to the starting values of the robot in autonamous. Devin
-        SmartDashboard.putNumber("short_BeltLength", -2.0);//the two doubles that are written in the following line are default values and can be changed. Change the default values to the starting values of the robot in autonamous. Devin
         
         controller = new Joystick(1);
         
         compressor = new Compressor(4,1); //Assigns Compressor
-        
-        
         
         timer.start(); //Initialize timer
         
@@ -136,8 +127,8 @@ public class RobotTemplate extends SimpleRobot {
         //stop the winch
         Shooter.stopWinch();
         
-        Output();
-        dash();
+        UI.output();
+        UI.dash();
         
         Shooter.shootAuto();
         Shooter.reload();
@@ -152,8 +143,8 @@ public class RobotTemplate extends SimpleRobot {
         compressor.start();  
         while(isOperatorControl() && isEnabled())
         {            
-            Output();
-            dash();
+            UI.output();
+            UI.dash();
 
             // Controls the shooter winches with the xbox triggers
             Shooter.setWinches(controller.getRawAxis(Constants.axis_triggers));
@@ -223,62 +214,6 @@ public class RobotTemplate extends SimpleRobot {
     public void test()
     {
         
-    }
-    
-    /*
-     * Primary control methods including camera, shooting, driving, picking up, 
-     * and output which are called once per loop through operator control 
-     */
-    
-    public void Output() 
-    {
-        printCounter++;
-
-        if (printCounter == 100) 
-        {       
-            //this will prevent the print screen from getting cluttered
-            robot.println(DriverStationLCD.Line.kUser1, 1, "                                        ");
-            robot.println(DriverStationLCD.Line.kUser2, 1, "                                        ");
-            robot.println(DriverStationLCD.Line.kUser3, 1, "                                        ");
-            robot.println(DriverStationLCD.Line.kUser4, 1, "                                        ");
-            robot.println(DriverStationLCD.Line.kUser5, 1, "                                        ");
-            robot.println(DriverStationLCD.Line.kUser6, 1, "                                        ");
-            robot.updateLCD(); //this updates the drivers station output screen, allowing everything to show up correctly
-            printCounter = 0;
-        } 
-
-        robot.println(DriverStationLCD.Line.kUser6, 1, "VP Distance: " + visionDistance);
-        //robot.println(DriverStationLCD.Line.kUser1, 1, "GyroAngle " + gyro.getAngle());
-        robot.println(DriverStationLCD.Line.kUser2, 1, "Encoder Winch " + Shooter.getWinchDistance());
-        //robot.println(DriverStationLCD.Line.kUser3, 1, "AccelX: " + accel.getAcceleration(ADXL345_I2C.Axes.kX));
-        //robot.println(DriverStationLCD.Line.kUser4, 1, "AccelY: " + accel.getAcceleration(ADXL345_I2C.Axes.kY));
-        //robot.println(DriverStationLCD.Line.kUser5, 1, "AccelZ: " + accel.getAcceleration(ADXL345_I2C.Axes.kZ));
-        robot.updateLCD();
-    }
-            
-    
-    //displays dashboard values
-    public void dash()
-    {
-        SmartDashboard.putNumber("controllerA1", controller.getRawAxis(Constants.axis_leftStick_X));
-        //SmartDashboard.putNumber("AccelX", accel.getAcceleration(ADXL345_I2C.Axes.kX));
-        //SmartDashboard.putNumber("AccelY", accel.getAcceleration(ADXL345_I2C.Axes.kY));
-        //SmartDashboard.putNumber("AccelZ", accel.getAcceleration(ADXL345_I2C.Axes.kZ));
-        //SmartDashboard.putNumber("Angle of Ladder", com.sun.squawk.util.MathUtils.atan2((double)accel.getAcceleration(ADXL345_I2C.Axes.kX), (double)accel.getAcceleration(ADXL345_I2C.Axes.kY)));
-        SmartDashboard.putNumber("winchEncoder", Shooter.getWinchDistance();
-        //SmartDashboard.putNumber("Gyro", gyro.getAngle());
-        SmartDashboard.putNumber("Distance", distanceGuess);
-
-        SmartDashboard.putNumber("Super Long Belt Length", Shooter.superLong_BeltLength);
-        SmartDashboard.putNumber("Long Belt Length", Shooter.long_BeltLength);
-        SmartDashboard.putNumber("Medium Short Belt Length", Shooter.mediumShort_BeltLength);
-        SmartDashboard.putNumber("Medium Long Belt Length", Shooter.mediumLong_BeltLength);
-        SmartDashboard.putNumber("Short Belt Length", Shooter.short_BeltLength);
-
-
-        SmartDashboard.putNumber("winchEncoderDisPerPulse", Shooter.winchEncoder.getRaw());
-        SmartDashboard.putBoolean("Limit Switch", Shooter.limitSwitch.get() );
-        SmartDashboard.putNumber("Distance from Target", distanceGuess);
     }
 
     private void distanceCalculate() 

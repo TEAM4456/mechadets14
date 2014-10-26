@@ -49,6 +49,5 @@ public class Loader
     {
         this.setPiston(DoubleSolenoid.Value.kReverse);
         this.setArms(0);
-    }
-    
+    }   
 }
