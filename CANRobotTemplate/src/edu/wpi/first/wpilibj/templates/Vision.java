@@ -1,7 +1,9 @@
 package edu.wpi.first.wpilibj.templates;
 
+import edu.wpi.first.wpilibj.camera.AxisCamera;
 import edu.wpi.first.wpilibj.image.BinaryImage;
 import edu.wpi.first.wpilibj.image.ColorImage;
+import edu.wpi.first.wpilibj.image.CriteriaCollection;
 import edu.wpi.first.wpilibj.image.NIVisionException;
 import edu.wpi.first.wpilibj.image.ParticleAnalysisReport;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -15,6 +17,8 @@ public class Vision
     AxisCamera camera;
     private double visionDistance;
     private double VisionCounter;
+    
+    CriteriaCollection cc;
     
     public void distanceCalculate() 
     {

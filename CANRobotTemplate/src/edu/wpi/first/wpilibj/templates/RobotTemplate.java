@@ -5,6 +5,8 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
+//SPLIT CLASS FILE
+
 // GIT REPOSITORY SUCCESSFULLY MADE!
 
 //CANRobotTemplate 2014
@@ -62,7 +64,12 @@ public class RobotTemplate extends SimpleRobot {
     ADXL345_I2C accel;
     Compressor compressor;
     Servo servoVertical, servoHorizontal;
-
+    
+    Loader loader;
+    DriveTrain driveTrain;
+    Shooter shooter;
+    UI ui;
+    
     //Relay ledLight;
     //left front 1
     //left back 2
@@ -78,10 +85,10 @@ public class RobotTemplate extends SimpleRobot {
     public void robotInit()
     {
         //uses the init methods from the other classes
-        DriveTrain.init();
-        Loader.init();
-        Shooter.init();
-        UI.init();
+        driveTrain = new DriveTrain();
+        loader = new Loader();
+        shooter = new Shooter();
+        ui = new UI();
         
         controller = new Joystick(1);
         compressor = new Compressor(4,1); //Assigns Compressor
@@ -93,14 +100,14 @@ public class RobotTemplate extends SimpleRobot {
      */
     public void autonomous()
     {
-        DriveTrain.setChassisSafteyEnabled(false);
+        driveTrain.setChassisSafteyEnabled(false);
         
         //The robot will drive forward for 1.2 seconds
-        DriveTrain.drive(1.0, 0.0, 0.0); //Mecanum Drive forward full speed
+        driveTrain.drive(1.0, 0.0, 0.0); //Mecanum Drive forward full speed
         timer.delay(1.2);
-        DriveTrain.drive(0.0,0.0,0.0); //Turn off Mecanum Drive
+        driveTrain.drive(0.0,0.0,0.0); //Turn off Mecanum Drive
         
-        Shooter.unwindWinchAuto();
+        shooter.unwindWinchAuto(this);
         
         //The robot will exit autonomous mode if !isAutonomous
         if (!isAutonomous())
@@ -109,13 +116,13 @@ public class RobotTemplate extends SimpleRobot {
         }
         
         //This stops the winch
-        Shooter.stopWinch();
+        shooter.stopWinch();
         
-        UI.output();
-        UI.dash();
+        ui.output(this);
+        ui.dashDisplay(this);
         
-        Shooter.shootAuto();
-        Shooter.reload();
+        shooter.shootAuto(loader);
+        shooter.reload(this);
     }
     
     /** 
@@ -127,59 +134,59 @@ public class RobotTemplate extends SimpleRobot {
         compressor.start();  
         while(isOperatorControl() && isEnabled())
         {            
-            UI.output();
-            UI.dash();
+            ui.output(this);
+            ui.dashDisplay(this);
 
             //Controls the shooter winches with the xbox triggers
-            Shooter.setWinches(controller.getRawAxis(Constants.axis_triggers));
+            shooter.setWinches(controller.getRawAxis(Constants.axis_triggers));
 
             //Button A will shoot the ball when pressed
             if (controller.getRawButton(Constants.button_A)) 
             {
-                Shooter.shoot();
+                shooter.shoot(this);
             }
 
             //A Specified button will release winch to a specified distance when pressed
             if(controller.getRawButton(Constants.button_leftBumper))
             {
-                Shooter.releaseWinch(SmartDashboard.getNumber("superLong_BeltLength", -18.0));
+                shooter.releaseWinch(SmartDashboard.getNumber("superLong_BeltLength", -18.0));
             }
             if (controller.getRawButton(Constants.button_Start)) 
             {
-                Shooter.releaseWinch(SmartDashboard.getNumber("long_BeltLength", -10.0));
+                shooter.releaseWinch(SmartDashboard.getNumber("long_BeltLength", -10.0));
             }
             if(controller.getRawButton(Constants.button_Y))
             {
-                Shooter.releaseWinch(SmartDashboard.getNumber("mediumLong_BeltLength", -7.0));
+                shooter.releaseWinch(SmartDashboard.getNumber("mediumLong_BeltLength", -7.0));
             }
             if(controller.getRawButton(Constants.button_X))
             {
-                Shooter.releaseWinch(SmartDashboard.getNumber("mediumShort_BeltLength", -4.5));
+                shooter.releaseWinch(SmartDashboard.getNumber("mediumShort_BeltLength", -4.5));
             }
             if(controller.getRawButton(Constants.button_B))
             {
-                Shooter.releaseWinch(SmartDashboard.getNumber("short_BeltLength", -2.0));
+                shooter.releaseWinch(SmartDashboard.getNumber("short_BeltLength", -2.0));
             }
             
             //If the Back Button (Button 7) is pressed, it will reload
             if (controller.getRawButton(Constants.button_Back))
             {
-                Shooter.reload();   
+                shooter.reload(this);   
             }
             
             //While the Right Bumper is pressed, it will pick up the ball
             if (controller.getRawButton(Constants.button_rightBumper))
             {
-                Loader.pickUpBall();
+                loader.pickUpBall();
             }
             //While the Right Bumper is not pressed, it will go back to its original position
             else
             {
-                Loader.resetArms();
+                loader.resetArms();
             }
 
             //This will drive the robot with respect to controller inputs
-            DriveTrain.drive(lowerSensitivity(controller.getMagnitude()),
+            driveTrain.drive(lowerSensitivity(controller.getMagnitude()),
                             controller.getDirectionDegrees(),
                             lowerSensitivity(controller.getRawAxis(Constants.axis_rightStick_X)));
 

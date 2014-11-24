@@ -13,29 +13,31 @@ import edu.wpi.first.wpilibj.Timer;
  */
 public class Shooter
 {
-    static Jaguar winch1, winch2;
-    static DoubleSolenoid hook;
-    static DigitalInput limitSwitch;
-    static Encoder winchEncoder;
+    Jaguar winch1, winch2;
+    DoubleSolenoid hook;
+    DigitalInput limitSwitch;
+    Encoder winchEncoder;
     
-    private static int hookUpdateState = Constants.HOOK_READY;
-    private static double hookUpdateStartTime = 0.0;
-    private static int encoderCounter;
-    private static DoubleSolenoid.Value pistonPrevState;
+    private int hookUpdateState = Constants.HOOK_READY;
+    private double hookUpdateStartTime;
+    private int encoderCounter;
+    private DoubleSolenoid.Value pistonPrevState;
     
-    static double superLong_BeltLength;
-    static double long_BeltLength;
-    static double mediumLong_BeltLength;
-    static double mediumShort_BeltLength;
-    static double short_BeltLength;
+    double superLong_BeltLength;
+    double long_BeltLength;
+    double mediumLong_BeltLength;
+    double mediumShort_BeltLength;
+    double short_BeltLength;
     
     private static DoubleSolenoid.Value latched;
     private static DoubleSolenoid.Value unlatched;
     
-    public static void init()
+    Timer timer;
+    
+    public Shooter()
     {
         winch1 = new Jaguar(5);
-        winch2= new Jaguar(6);
+        winch2 = new Jaguar(6);
         limitSwitch = new DigitalInput(3);//true = open; false = close
         
         winchEncoder = new Encoder(1, 2, false, CounterBase.EncodingType.k1X);
@@ -44,49 +46,50 @@ public class Shooter
         hook = new DoubleSolenoid(1,2);  //Assigns Solenoid to Control Shooter Hook
         latched = DoubleSolenoid.Value.kReverse; //Assigns variable to Shooter Hook Solenoid to unhook
         unlatched = DoubleSolenoid.Value.kForward; //Assigns variable to Shooter Hook Solenoid to hook
+        hookUpdateStartTime = 0.0;
         
         pistonPrevState = DoubleSolenoid.Value.kOff; //Assigns Variable to Piston to Default state
         winchEncoder.start();
+        
+        //init a new timer
+        timer = new Timer();
     }
     
     //Sets the winches to a given value
-    public static void setWinches(double winchValue)
+    public void setWinches(double winchValue)
     {
         winch1.set(winchValue);
         winch2.set(winchValue);
     }
     
     //Returns the winch distance
-    public static double getWinchDistance()
+    public double getWinchDistance()
     {
         return winchEncoder.getDistance();
     }
     
     //This opens the limit switch
-    public static void openLimitSwitch()
+    public boolean getLimitSwitch()
     {
-        limitSwitch = true;
-    }
-    
-    //This closes the limit switch
-    public static void closeLimitSwitch()
-    {
-        limitSwitch = false;
+        return limitSwitch.get();
     }
     
     //This shoots the ball
-    public static void shoot()
+    public void shoot(RobotTemplate robot)
     {
-        Loader.setPiston(DoubleSolenoid.Value.kForward);  
-        chassis.mecanumDrive_Polar(0.0,0.0,0.0); //Turn off Mecanum Driv
+        robot.loader.setPiston(DoubleSolenoid.Value.kForward);  
+        
+        //TODO stop chassis (DriveTrain object) here
+        robot.driveTrain.drive(0.0,0.0,0.0); //Turn off Mecanum Drive
+        
         Timer.delay(0.70);
         hook.set(unlatched);
         Timer.delay(0.5);
-        Shooter.reload();
+        this.reload(robot);
     }
     
     //This releases the winch to a specified distance
-    public static void releaseWinch(double distanceOfWinch)
+    public void releaseWinch(double distanceOfWinch)
     {   
         //Use the encoder values from testing
         
@@ -111,52 +114,54 @@ public class Shooter
         this.setWinches(0.0);
     }
     
-    public static void stopWinch()
+    public void stopWinch()
     {
         this.setWinches(0.0);
     }
     
-    public static void unwindWinchAuto()
+    public void unwindWinchAuto(RobotTemplate robot)
     {
         //unwind belt to value -7.0 for autonomous
         winchEncoder.reset();  //Used to make sure encoder is set to 0 at the start
         
         //Unwind winch to belt length necessary to shot from starting position
-        while(winchEncoder.getDistance() > -7.0 && RobotTemplate.isAutonomous()) 
+        while(winchEncoder.getDistance() > -7.0 && robot.isAutonomous()) 
         {
             this.setWinches(1.0);   
         }
     }
     
-    public static void shootAuto()
+    //autonomous shooting
+    public void shootAuto(Loader loader)
     {
-        Loader.setPiston(DoubleSolenoid.Value.kForward);  
-        RobotTemplate.timer.delay(0.5);
+        loader.setPiston(DoubleSolenoid.Value.kForward);
+        Timer.delay(0.5);
         hook.set(unlatched); //The mechanism will launch ball after getting to desired encoder value
-        RobotTemplate.timer.delay(0.5);
+        Timer.delay(0.5);
     }
     
-    public static void reload()
+    public void reload(RobotTemplate robot)
     {
         //make sure the latch is open
         hook.set(unlatched);
         winchEncoder.start();
+        
         //while the limit switch is pressed, push the winch negative
-        while(limitSwitch.get()  && (isAutonomous() || isOperatorControl()))
+        while(limitSwitch.get()  && (robot.isAutonomous() || robot.isOperatorControl()))
         {
             this.setWinches(-1.0);
         }
         //Set winch to 0
         this.setWinches(0.0);
         hook.set(latched);
-        Loader.setPiston(DoubleSolenoid.Value.kReverse);  
+        robot.loader.setPiston(DoubleSolenoid.Value.kReverse);  
         Timer.delay(0.8);
         winchEncoder.reset();       
     }
     
     //function to start hooking the latch
     //Not being used right now
-    public static void startHookLatch()
+    public void startHookLatch()
     {
         if (hookUpdateState == Constants.HOOK_READY)
         {
@@ -166,33 +171,33 @@ public class Shooter
     
     //function to start the hook release process
     //Not being used right now
-    public static void startHookRelease()
+    public void startHookRelease(Loader loader)
     {
         if (hookUpdateState !=Constants.HOOK_READY)
         {
             return;
         }
-        Loader.setPiston(DoubleSolenoid.Value.kForward);  
-        hookUpdateStartTime = RobotTemplate.timer.get();
+        loader.setPiston(DoubleSolenoid.Value.kForward);  
+        hookUpdateStartTime = timer.get();
         hookUpdateState = Constants.HOOK_WAIT_1;
     }
     
     //update the hook status
     //Not being used right now
-    public static void hookUpdate()
+    public void hookUpdate(RobotTemplate robot)
     {
         if (hookUpdateState == Constants.HOOK_READY)
         {
             //Do Nothing...
         }
-        else if ((hookUpdateState == Constants.HOOK_WAIT_1) && ((RobotTemplate.timer.get() - hookUpdateStartTime) > 0.2))
+        else if ((hookUpdateState == Constants.HOOK_WAIT_1) && ((timer.get() - hookUpdateStartTime) > 0.2))
         {
             hook.set(unlatched);
             hookUpdateState = Constants.HOOK_WAIT_2;
         }
-        else if ((hookUpdateState == Constants.HOOK_WAIT_2) && ((RobotTemplate.timer.get() - hookUpdateStartTime) >1.2))
+        else if ((hookUpdateState == Constants.HOOK_WAIT_2) && ((timer.get() - hookUpdateStartTime) >1.2))
         {
-            this.reload();
+            this.reload(robot);
             hookUpdateState = Constants.HOOK_READY;
         }
     }

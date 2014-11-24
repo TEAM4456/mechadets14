@@ -10,12 +10,12 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class UI
 {
     //Declares the Driver Station output box
-    private static DriverStationLCD outputBox;
+    private DriverStationLCD outputBox;
     //Declares the print counter
     private int printCounter;
     
     
-    public static void init()
+    public UI()
     {
         //The output box initializes itself
         outputBox = DriverStationLCD.getInstance();
@@ -30,7 +30,7 @@ public class UI
         SmartDashboard.putNumber("short_BeltLength", -2.0);
     }
     
-    public static void output() 
+    public void output(RobotTemplate robot) 
     {
         //Increments the print counter
         printCounter++;
@@ -51,32 +51,32 @@ public class UI
         } 
         
         outputBox.println(DriverStationLCD.Line.kUser1, 1, "                                        ");
-        outputBox.println(DriverStationLCD.Line.kUser2, 1, "Encoder Winch " + Shooter.getWinchDistance()); //prints the encode winch distance
+        outputBox.println(DriverStationLCD.Line.kUser2, 1, "Encoder Winch " + robot.shooter.getWinchDistance()); //prints the encode winch distance
         outputBox.println(DriverStationLCD.Line.kUser3, 1, "                                        ");
         outputBox.println(DriverStationLCD.Line.kUser4, 1, "                                        ");
         outputBox.println(DriverStationLCD.Line.kUser5, 1, "                                        ");
-        outputBox.println(DriverStationLCD.Line.kUser6, 1, "VP Distance: " + RobotTemplate.visionDistance); // prints the vision distance
+        outputBox.println(DriverStationLCD.Line.kUser6, 1, "VP Distance: " /* + robot.visionDistance*/); // prints the vision distance
         //this updates the driver's station output screen, allowing everything to show up correctly
         outputBox.updateLCD();
     }
     
     //This displays the dashboard values
-    public static void dash()
+    public void dashDisplay(RobotTemplate robot)
     {
-        SmartDashboard.putNumber("controllerA1", controller.getRawAxis(Constants.axis_leftStick_X));
+        SmartDashboard.putNumber("controllerA1", robot.controller.getRawAxis(Constants.axis_leftStick_X));
         
-        SmartDashboard.putNumber("winchEncoder", Shooter.getWinchDistance();
+        SmartDashboard.putNumber("winchEncoder", robot.shooter.getWinchDistance());
         
-        SmartDashboard.putNumber("Distance", distanceGuess);
+        SmartDashboard.putNumber("Distance", robot.distanceGuess);
 
-        SmartDashboard.putNumber("Super Long Belt Length", Shooter.superLong_BeltLength);
-        SmartDashboard.putNumber("Long Belt Length", Shooter.long_BeltLength);
-        SmartDashboard.putNumber("Medium Short Belt Length", Shooter.mediumShort_BeltLength);
-        SmartDashboard.putNumber("Medium Long Belt Length", Shooter.mediumLong_BeltLength);
-        SmartDashboard.putNumber("Short Belt Length", Shooter.short_BeltLength);
+        SmartDashboard.putNumber("Super Long Belt Length", robot.shooter.superLong_BeltLength);
+        SmartDashboard.putNumber("Long Belt Length", robot.shooter.long_BeltLength);
+        SmartDashboard.putNumber("Medium Short Belt Length", robot.shooter.mediumShort_BeltLength);
+        SmartDashboard.putNumber("Medium Long Belt Length", robot.shooter.mediumLong_BeltLength);
+        SmartDashboard.putNumber("Short Belt Length", robot.shooter.short_BeltLength);
 
-        SmartDashboard.putNumber("winchEncoderDisPerPulse", Shooter.winchEncoder.getRaw());
-        SmartDashboard.putBoolean("Limit Switch", Shooter.limitSwitch.get() );
-        SmartDashboard.putNumber("Distance from Target", distanceGuess);
+        SmartDashboard.putNumber("winchEncoderDisPerPulse", robot.shooter.winchEncoder.getRaw());
+        SmartDashboard.putBoolean("Limit Switch", robot.shooter.limitSwitch.get() );
+        SmartDashboard.putNumber("Distance from Target", robot.distanceGuess);
     }
 }
