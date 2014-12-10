@@ -136,7 +136,8 @@ public class RobotTemplate extends SimpleRobot {
         {            
             ui.output(this);
             ui.dashDisplay(this);
-
+            
+            //LT RT
             //Controls the shooter winches with the xbox triggers
             shooter.setWinches(controller.getRawAxis(Constants.axis_triggers));
 
@@ -146,28 +147,34 @@ public class RobotTemplate extends SimpleRobot {
                 shooter.shoot(this);
             }
 
-            //A Specified button will release winch to a specified distance when pressed
+            //a Specified button will release winch to a specified distance when pressed
+            //LB
             if(controller.getRawButton(Constants.button_leftBumper))
             {
                 shooter.releaseWinch(SmartDashboard.getNumber("superLong_BeltLength", -18.0));
             }
+            //START
             if (controller.getRawButton(Constants.button_Start)) 
             {
                 shooter.releaseWinch(SmartDashboard.getNumber("long_BeltLength", -10.0));
             }
+            //Y
             if(controller.getRawButton(Constants.button_Y))
             {
                 shooter.releaseWinch(SmartDashboard.getNumber("mediumLong_BeltLength", -7.0));
             }
+            //X
             if(controller.getRawButton(Constants.button_X))
             {
                 shooter.releaseWinch(SmartDashboard.getNumber("mediumShort_BeltLength", -4.5));
             }
+            //B
             if(controller.getRawButton(Constants.button_B))
             {
                 shooter.releaseWinch(SmartDashboard.getNumber("short_BeltLength", -2.0));
             }
             
+            //BACK
             //If the Back Button (Button 7) is pressed, it will reload
             if (controller.getRawButton(Constants.button_Back))
             {
